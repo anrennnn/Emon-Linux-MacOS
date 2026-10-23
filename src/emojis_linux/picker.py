@@ -89,6 +89,7 @@ def _stylesheet() -> str:
         QToolButton:hover {{ background: {c['hover']}; }}
         QToolButton:checked {{ background: {c['hover']}; border-bottom: 2px solid {c['accent']}; }}
         #tab {{ font-size: 14px; padding: 5px 10px; }}
+        #categoria {{ padding: 0px; }}
         QMenu {{ background: {c['field']}; color: {c['text']}; border: 1px solid {c['border']}; }}
         QMenu::item {{ padding: 4px 14px; }}
         QMenu::item:selected {{ background: {c['hover']}; }}
@@ -289,6 +290,7 @@ class EmojiPanel(QWidget):
         self.tone_button = QToolButton(frame)
         self.tone_button.setToolTip("Tono de piel")
         self.tone_button.setFont(self._font_for("emojis", 15))
+        self.tone_button.setObjectName("categoria")
         self.tone_button.setFixedSize(32, 32)
         self.tone_button.clicked.connect(self._choose_tone)
 
@@ -340,6 +342,7 @@ class EmojiPanel(QWidget):
             btn.setToolTip(title)
             btn.setCheckable(True)
             btn.setProperty("key", key)
+            btn.setObjectName("categoria")  # sin relleno: en macOS el emoji no cabría y saldría «…»
             btn.setFixedSize(32, 32)
             btn.setFont(self._font_for(self.tab if key != RECENT else "simbolos", 16))
             btn.clicked.connect(lambda _, k=key: self.show_section(k))
