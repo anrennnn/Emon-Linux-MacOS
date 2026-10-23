@@ -10,7 +10,7 @@ rm -rf "$WORK"
 mkdir -p "$WORK" dist
 tar --transform "s,^,EMON-Linux-MacOS-$COMMIT/," -czf "$WORK/emojis-linux-$VERSION.tar.gz" \
     Makefile LICENSE LICENSE-UNICODE README.md src data
-sed -e "s/@COMMIT@/$COMMIT/" -e "s/@SHA256@/SKIP/" -e "s/^pkgver=.*/pkgver=$VERSION/" \
+sed -e "s/^_commit=.*/_commit=$COMMIT/" -e "s/^sha256sums=.*/sha256sums=(SKIP)/" -e "s/^pkgver=.*/pkgver=$VERSION/" \
     packaging/arch/PKGBUILD > "$WORK/PKGBUILD"
 cp packaging/arch/emojis-linux.install "$WORK/"
 docker run --rm -v "$WORK:/build" archlinux:base-devel sh -c '
