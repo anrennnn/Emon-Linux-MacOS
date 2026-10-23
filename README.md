@@ -30,9 +30,20 @@ Descarga el paquete de tu distribución desde la carpeta [`instalador/`](instala
 
 **Debian, Ubuntu, Linux Mint, Pop!\_OS, Zorin**
 
+Lo más fácil es copiar esto en la terminal (descarga el paquete e instala):
+
 ```sh
-sudo apt install ./emojis-linux_0.1.0_all.deb
+wget -O /tmp/emojis-linux.deb https://github.com/anrennnn/EMON-Linux-MacOS/raw/main/instalador/emojis-linux_0.1.0_all.deb
+sudo apt install /tmp/emojis-linux.deb
 ```
+
+Si lo descargaste con el navegador, entra antes en la carpeta donde está
+(`cd ~/Descargas`) y usa `sudo apt install ./emojis-linux_0.1.0_all.deb`. Si apt
+dice «Se ha suministrado el fichero no admitido», es que el archivo no está en
+la carpeta donde estás.
+
+Funciona desde Ubuntu 22.04 (Linux Mint 21, Zorin OS 17, Pop!\_OS 22.04), que
+usan PyQt5, hasta las versiones actuales con PyQt6.
 
 **Fedora y Nobara**
 
@@ -78,13 +89,23 @@ porque en macOS significa «cancelar» en todas las apps.
 | Enter o clic | Escribe el emoji y cierra el panel |
 | Clic derecho | Elegir el tono de piel para ese emoji |
 | Esc o clic fuera | Cierra el panel |
+| ⚙ (arriba a la derecha) | Cambiar el atajo de teclado |
+
+### Cambiar el atajo
+
+Pulsa ⚙ en el panel, o busca «Cambiar el atajo de teclado» en el menú de
+aplicaciones (clic derecho sobre Emojis), o escribe `emojis-linux ajustes`. Haz
+clic en el cuadro, pulsa la combinación que quieras (por ejemplo Ctrl + Alt + E)
+y pulsa **Guardar**. Emojis la pone en tu escritorio y quita la anterior.
+**Restaurar predeterminado** vuelve a Super + . y Super + ; (⌃⌘. y ⌃⌘; en Mac).
 
 Desde la terminal:
 
 ```sh
 emojis-linux abrir       # abrir el panel
 emojis-linux simbolos    # abrir en la pestaña de símbolos
-emojis-linux atajos      # volver a configurar Super+. en el escritorio
+emojis-linux ajustes     # elegir otro atajo de teclado
+emojis-linux atajos      # volver a poner el atajo elegido en el escritorio
 emojis-linux salir       # detener el proceso de fondo
 emojis-linux version
 ```
@@ -113,7 +134,8 @@ systemctl --user enable --now ydotool
 
 ## Atajos en cada escritorio
 
-Al primer arranque, Emojis configura Super + . y Super + ; él solo:
+Al primer arranque, Emojis configura Super + . y Super + ; él solo (o el atajo
+que elijas con ⚙):
 
 - **GNOME**: dos atajos personalizados en Configuración → Teclado.
 - **KDE Plasma**: el selector de emojis de KDE ya usa Meta + .; se le cambia a

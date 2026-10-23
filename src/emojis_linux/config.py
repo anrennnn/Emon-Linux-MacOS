@@ -58,10 +58,12 @@ class Settings:
     def __init__(self):
         self.recent: list[str] = []
         self.tone = 0  # 0 = amarillo (sin tono), 1..5 = de claro a oscuro
+        self.shortcuts: list[str] = []  # vacío = los predeterminados; texto de Qt, p. ej. «Meta+.»
         try:
             data = json.loads(SETTINGS_FILE.read_text(encoding="utf-8"))
             self.recent = [s for s in data.get("recientes", []) if isinstance(s, str)][:RECENT_LIMIT]
             self.tone = int(data.get("tono", 0)) if 0 <= int(data.get("tono", 0)) <= 5 else 0
+            self.shortcuts = [s for s in data.get("atajos", []) if isinstance(s, str) and s]
         except (OSError, ValueError, TypeError, AttributeError):
             pass
 
@@ -73,10 +75,15 @@ class Settings:
         self.tone = tone
         self.save()
 
+    def set_shortcuts(self, keys: list[str]):
+        self.shortcuts = keys
+        self.save()
+
     def save(self):
         DATA_DIR.mkdir(parents=True, exist_ok=True)
         tmp = SETTINGS_FILE.with_suffix(".tmp")
         tmp.write_text(
-            json.dumps({"recientes": self.recent, "tono": self.tone}, ensure_ascii=False), encoding="utf-8"
+            json.dumps({"recientes": self.recent, "tono": self.tone, "atajos": self.shortcuts}, ensure_ascii=False),
+            encoding="utf-8",
         )
         tmp.replace(SETTINGS_FILE)

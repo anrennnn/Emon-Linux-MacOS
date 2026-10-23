@@ -17,9 +17,8 @@ import os
 import shutil
 import subprocess
 
-from PyQt6.QtGui import QGuiApplication
-
 from . import config
+from .qt import QGuiApplication
 
 WLROOTS = ("hyprland", "sway", "niri", "wayfire", "river", "labwc")
 

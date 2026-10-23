@@ -1,16 +1,13 @@
 """Panel de emojis y símbolos (Super+.), al estilo de Windows 11."""
 
-from PyQt6.QtCore import QAbstractListModel, QModelIndex, QPoint, QRectF, QSize, Qt, QTimer, pyqtSignal
-from PyQt6.QtGui import (
-    QColor, QCursor, QFont, QFontDatabase, QGuiApplication, QPainter, QPainterPath, QRegion, QTextLayout,
-)
-from PyQt6.QtWidgets import (
-    QAbstractItemView, QButtonGroup, QFrame, QHBoxLayout, QLabel, QLineEdit, QListView, QMenu,
-    QStyle, QStyledItemDelegate, QToolButton, QVBoxLayout, QWidget,
-)
-
 from . import config, inserter
 from .catalog import EMOJI_FONTS, Catalog, Item, Section, search
+from .qt import (
+    QAbstractItemView, QAbstractListModel, QButtonGroup, QColor, QCursor, QFont, QFrame, QGuiApplication,
+    QHBoxLayout, QLabel, QLineEdit, QListView, QMenu, QModelIndex, QPainter, QPainterPath, QPoint, QRectF,
+    QRegion, QSize, QStyle, QStyledItemDelegate, Qt, QTextLayout, QTimer, QToolButton, QVBoxLayout, QWidget,
+    font_families, pyqtSignal,
+)
 
 WIDTH, HEIGHT = 384, 470
 TONE_SAMPLE = "✋"
@@ -20,7 +17,7 @@ INVISIBLE = ("\ufe0f", "\ufe0e", "\u200d")
 
 
 def emoji_font() -> QFont:
-    families = set(QFontDatabase.families())
+    families = set(font_families())
     for name in EMOJI_FONTS:
         if name in families:
             return QFont(name)
@@ -215,6 +212,7 @@ class EmojiPanel(QWidget):
         self.cells_items: list[Item | None] = []
         self.target = inserter.Target()
         self.menu_open = False
+        self.open_settings = lambda: None  # lo pone el proceso de fondo
 
         self.setWindowTitle(f"{config.APP_NAME} - Panel de emojis")
         self.setWindowFlags(
@@ -251,6 +249,11 @@ class EmojiPanel(QWidget):
             self.tab_buttons[key] = btn
             header.addWidget(btn)
         header.addStretch(1)
+        gear = QToolButton(frame)
+        gear.setText("⚙")
+        gear.setToolTip("Cambiar el atajo de teclado")
+        gear.clicked.connect(lambda: self.open_settings())
+        header.addWidget(gear)
         close = QToolButton(frame)
         close.setText("✕")
         close.setToolTip("Cerrar (Esc)")

@@ -38,6 +38,9 @@ jobs:
           "$APP" abrir
           sleep 4
           screencapture -x "captura-$(uname -m).png" || true
+          "$APP" ajustes
+          sleep 3
+          screencapture -x "captura-ajustes-$(uname -m).png" || true
           "$APP" salir
           sleep 2
           cat arranque.log

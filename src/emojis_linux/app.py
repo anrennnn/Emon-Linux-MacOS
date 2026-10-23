@@ -12,11 +12,8 @@ import shutil
 import subprocess
 import sys
 
-from PyQt6.QtCore import QTimer
-from PyQt6.QtNetwork import QLocalServer, QLocalSocket
-from PyQt6.QtWidgets import QApplication
-
 from . import config
+from .qt import QApplication, QLocalServer, QLocalSocket, QTimer, prepare_application
 
 SOCKET_NAME = f"{config.APP_ID}-{os.getuid()}"
 
@@ -42,13 +39,20 @@ class Daemon:
         hidden = catalog.drop_unsupported(support_checker(emoji_font()))
         if hidden:
             print(f"{hidden} emojis ocultos: la fuente de emojis instalada todavía no los incluye.", file=sys.stderr)
-        self.panel = EmojiPanel(catalog, config.Settings(), lambda text: notify(config.APP_NAME, text))
+        from .settings_ui import ShortcutDialog
+
+        self.settings = config.Settings()
+        self.panel = EmojiPanel(catalog, self.settings, lambda text: notify(config.APP_NAME, text))
+        self.panel.open_settings = self.open_settings
+        self.dialog = ShortcutDialog(self.settings, self.apply_keys, lambda text: notify(config.APP_NAME, text))
         self.hotkeys = None
         if config.IS_MACOS:
             from . import macos
 
             macos.become_accessory()
-            self.hotkeys = macos.HotKeys(lambda: self.handle("abrir"))
+            from .shortcuts import current_keys
+
+            self.hotkeys = macos.HotKeys(lambda: self.handle("abrir"), current_keys())
 
         QLocalServer.removeServer(SOCKET_NAME)
         self.server = QLocalServer()
@@ -70,8 +74,29 @@ class Daemon:
             self.panel.open("emojis")
         elif command == "simbolos":
             self.panel.open("simbolos")
+        elif command == "ajustes":
+            self.open_settings()
         elif command == "salir":
             self.app.quit()
+
+    def open_settings(self):
+        self.panel.hide()
+        if config.IS_MACOS:
+            from . import macos
+
+            macos.activate_self()
+        self.dialog.open_dialog()
+
+    def apply_keys(self, keys: list[str], old: list[str]) -> list[str]:
+        """Pone el atajo nuevo en el escritorio (Linux) o lo registra (macOS)."""
+        from .shortcuts import apply, label
+
+        if self.hotkeys is None:
+            return apply(keys, old)
+        failed = self.hotkeys.set_keys(keys)
+        if failed:
+            return [f"No se pudo usar {', '.join(label(k) for k in failed)}: puede que lo use otra app."]
+        return [f"Listo: {' o '.join(label(k) for k in keys)} abre el panel de emojis."]
 
 
 def notify(title: str, body: str):
@@ -112,7 +137,8 @@ def main(argv=None):
     sub.add_parser("abrir", help="Abrir el panel de emojis (Super+.)")
     sub.add_parser("simbolos", help="Abrir el panel en la pestaña de símbolos")
     sub.add_parser("segundo-plano", help="Iniciar solo el proceso de fondo (se usa al iniciar sesión)")
-    sub.add_parser("atajos", help="Volver a configurar Super+. en el escritorio (Linux)")
+    sub.add_parser("ajustes", help="Elegir el atajo de teclado que abre el panel")
+    sub.add_parser("atajos", help="Volver a poner el atajo elegido en el escritorio (Linux)")
     sub.add_parser("salir", help="Detener el proceso de fondo")
     sub.add_parser("version", help="Mostrar la versión")
     args = parser.parse_args(argv)
@@ -131,9 +157,12 @@ def main(argv=None):
 
     # Sin argumentos (menú de aplicaciones o Emojis.app en el Finder) se abre el panel;
     # al iniciar sesión se usa «segundo-plano», que solo deja el proceso listo.
-    command = {"abrir": "abrir", "simbolos": "simbolos", "salir": "salir"}.get(args.command or "abrir", "")
+    command = {"abrir": "abrir", "simbolos": "simbolos", "ajustes": "ajustes", "salir": "salir"}.get(
+        args.command or "abrir", ""
+    )
 
     _prepare_platform()
+    prepare_application()
     app = QApplication(sys.argv[:1])
     app.setApplicationName(config.APP_ID)
     app.setApplicationDisplayName(config.APP_NAME)

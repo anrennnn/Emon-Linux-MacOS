@@ -1,8 +1,11 @@
-"""Registra Super+. y Super+; (los dos atajos de Windows) en el escritorio del usuario.
+"""Registra el atajo del panel (por defecto Super+. y Super+;) en el escritorio.
 
 Cada escritorio guarda sus atajos en un sitio distinto, así que no hay una única
-forma de hacerlo. Se ejecuta una vez por usuario (al primer arranque) y se puede
-repetir con `emojis-linux atajos`.
+forma de hacerlo. Se ejecuta al primer arranque, cuando el usuario elige otro
+atajo en la ventana de ajustes y con `emojis-linux atajos`.
+
+Los atajos se guardan como texto de Qt («Meta+.», «Ctrl+Alt+E»); en Linux
+Meta es la tecla Super (la de Windows).
 """
 
 import ast
@@ -12,7 +15,52 @@ import subprocess
 from . import config
 
 OPEN_CMD = "emojis-linux abrir"
-BINDINGS = ("<Super>period", "<Super>semicolon")
+# En macOS, Qt llama «Ctrl» a ⌘ y «Meta» a ⌃: el predeterminado es ⌃⌘. (⌘. es «cancelar»).
+DEFAULT_KEYS = ["Meta+Ctrl+.", "Meta+Ctrl+;"] if config.IS_MACOS else ["Meta+.", "Meta+;"]
+
+# Nombres de tecla de X11/xkb, los que usan GNOME, Cinnamon, XFCE, Hyprland y Sway.
+_KEYSYMS = {
+    ".": "period", ",": "comma", ";": "semicolon", ":": "colon", "'": "apostrophe", '"': "quotedbl",
+    "/": "slash", "\\": "backslash", "[": "bracketleft", "]": "bracketright", "-": "minus", "=": "equal",
+    "`": "grave", "+": "plus", "*": "asterisk", "#": "numbersign", "<": "less", ">": "greater",
+    "Space": "space", "Return": "Return", "Enter": "Return", "Tab": "Tab", "Ins": "Insert", "Del": "Delete",
+    "Home": "Home", "End": "End", "PgUp": "Prior", "PgDown": "Next", "Esc": "Escape",
+}
+_GTK_MODS = {"Meta": "<Super>", "Ctrl": "<Control>", "Alt": "<Alt>", "Shift": "<Shift>"}
+
+
+def split(key: str) -> tuple[list[str], str]:
+    """«Meta+Shift+.» → (['Meta', 'Shift'], '.'). La tecla «+» se escribe «Meta++»."""
+    if key.endswith("++"):
+        return [m for m in key[:-2].split("+") if m], "+"
+    *mods, last = key.split("+")
+    return mods, last
+
+
+def keysym(name: str) -> str:
+    if name in _KEYSYMS:
+        return _KEYSYMS[name]
+    return name.lower() if len(name) == 1 else name
+
+
+def to_gtk(key: str) -> str:
+    """«Meta+.» → «<Super>period»."""
+    mods, name = split(key)
+    return "".join(_GTK_MODS.get(m, "") for m in mods) + keysym(name)
+
+
+def label(key: str) -> str:
+    """Para enseñar al usuario: «Meta+.» → «Super+.»."""
+    if config.IS_MACOS:
+        from .qt import QKeySequence
+
+        return QKeySequence(key).toString(QKeySequence.SequenceFormat.NativeText)
+    mods, name = split(key)
+    return " + ".join([*("Super" if m == "Meta" else m for m in mods), name])
+
+
+def current_keys() -> list[str]:
+    return config.Settings().shortcuts or list(DEFAULT_KEYS)
 
 
 def _run(*cmd) -> str:
@@ -44,17 +92,17 @@ GNOME_KEYS = "org.gnome.settings-daemon.plugins.media-keys"
 GNOME_BASE = "/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/"
 
 
-def _setup_gnome() -> list[str]:
-    paths = _gsettings_list(GNOME_KEYS, "custom-keybindings")
+def _setup_gnome(keys: list[str], _old: list[str]) -> list[str]:
     # GNOME solo admite una tecla por atajo personalizado: uno para cada combinación.
-    for n, binding in enumerate(BINDINGS):
+    # Primero se quitan todos los de Emojis, por si antes había más.
+    paths = [p for p in _gsettings_list(GNOME_KEYS, "custom-keybindings") if "/emojis-linux-" not in p]
+    for n, key in enumerate(keys):
         path = f"{GNOME_BASE}emojis-linux-{n}/"
-        if path not in paths:
-            paths.append(path)
+        paths.append(path)
         schema = f"{GNOME_KEYS}.custom-keybinding:{path}"
         _gsettings_set(schema, "name", "Panel de emojis")
         _gsettings_set(schema, "command", OPEN_CMD)
-        _gsettings_set(schema, "binding", binding)
+        _gsettings_set(schema, "binding", to_gtk(key))
     _gsettings_set(GNOME_KEYS, "custom-keybindings", paths)
     return []
 
@@ -65,7 +113,7 @@ CINNAMON_KEYS = "org.cinnamon.desktop.keybindings"
 CINNAMON_BASE = "/org/cinnamon/desktop/keybindings/custom-keybindings/"
 
 
-def _setup_cinnamon() -> list[str]:
+def _setup_cinnamon(keys: list[str], _old: list[str]) -> list[str]:
     names = _gsettings_list(CINNAMON_KEYS, "custom-list")
     slug = "custom-emojis-linux"
     if slug not in names:
@@ -73,7 +121,7 @@ def _setup_cinnamon() -> list[str]:
     schema = f"{CINNAMON_KEYS}.custom-keybinding:{CINNAMON_BASE}{slug}/"
     _gsettings_set(schema, "name", "Panel de emojis")
     _gsettings_set(schema, "command", OPEN_CMD)
-    _gsettings_set(schema, "binding", list(BINDINGS))
+    _gsettings_set(schema, "binding", [to_gtk(k) for k in keys])
     _gsettings_set(CINNAMON_KEYS, "custom-list", names)
     return []
 
@@ -81,28 +129,32 @@ def _setup_cinnamon() -> list[str]:
 # --- XFCE (Xubuntu, MX Linux, Mint XFCE) ------------------------------------------
 
 
-def _setup_xfce() -> list[str]:
-    for binding in BINDINGS:
+def _setup_xfce(keys: list[str], old: list[str]) -> list[str]:
+    for key in old:
+        prop = f"/commands/custom/{to_gtk(key)}"
+        # Solo se borra si sigue siendo nuestro (el usuario pudo reasignarlo).
+        if _run("xfconf-query", "-c", "xfce4-keyboard-shortcuts", "-p", prop) == OPEN_CMD:
+            _run("xfconf-query", "-c", "xfce4-keyboard-shortcuts", "-p", prop, "-r")
+    for key in keys:
         _run(
             "xfconf-query", "-c", "xfce4-keyboard-shortcuts",
-            "-p", f"/commands/custom/{binding}", "-n", "-t", "string", "-s", OPEN_CMD,
+            "-p", f"/commands/custom/{to_gtk(key)}", "-n", "-t", "string", "-s", OPEN_CMD,
         )
     return []
 
 
 # --- KDE Plasma (Kubuntu, KDE neon, Fedora KDE, CachyOS) ---------------------------
 
-# Códigos de tecla de Qt, tal como los espera kglobalaccel.
+# Modificadores de Qt, tal como los espera kglobalaccel.
 _META, _CTRL, _ALT, _SHIFT = 0x10000000, 0x04000000, 0x08000000, 0x02000000
-_KEY_PERIOD, _KEY_SEMICOLON, _KEY_SPACE = 0x2E, 0x3B, 0x20
+_KEY_SPACE, _KEY_PERIOD = 0x20, 0x2E
+EMOJIER = ("org.kde.plasma.emojier.desktop", "_launch")
 
-# (componente, acción, teclas nuevas). El atajo de Emojis viene de la línea
-# X-KDE-Shortcuts de emojis-linux.desktop; antes hay que quitárselo al selector de KDE.
-KDE_CHANGES = [
-    # El selector de emojis de Plasma usa Meta+. ; se le deja Meta+Ctrl+Alt+Mayús+Espacio.
-    ("org.kde.plasma.emojier.desktop", "_launch", [_META | _CTRL | _ALT | _SHIFT | _KEY_SPACE]),
-    ("emojis-linux.desktop", "_launch", [_META | _KEY_PERIOD, _META | _KEY_SEMICOLON]),
-]
+
+def _kde_code(key: str) -> int:
+    from .qt import QKeySequence, combined
+
+    return combined(QKeySequence(key))
 
 
 def _kglobalaccel_set(component: str, action: str, keys: list[int]) -> bool:
@@ -126,9 +178,18 @@ def _kglobalaccel_set(component: str, action: str, keys: list[int]) -> bool:
         return False
 
 
-def _setup_kde() -> list[str]:
-    if all(_kglobalaccel_set(*change) for change in KDE_CHANGES):
-        return ["El selector de emojis de KDE pasa a Meta+Ctrl+Alt+Mayús+Espacio."]
+def _setup_kde(keys: list[str], old: list[str]) -> list[str]:
+    notes = []
+    changes = [("emojis-linux.desktop", "_launch", [_kde_code(k) for k in keys])]
+    if "Meta+." in keys:
+        # El selector de emojis de Plasma usa Meta+. ; se le deja Meta+Ctrl+Alt+Mayús+Espacio.
+        changes.insert(0, (*EMOJIER, [_META | _CTRL | _ALT | _SHIFT | _KEY_SPACE]))
+        notes.append("El selector de emojis de KDE pasa a Meta+Ctrl+Alt+Mayús+Espacio.")
+    elif "Meta+." in old:
+        # Emojis deja libre Meta+.: se le devuelve al selector de KDE.
+        changes.append((*EMOJIER, [_META | _KEY_PERIOD]))
+    if all(_kglobalaccel_set(*change) for change in changes):
+        return notes
 
     # kglobalaccel no responde: se deja escrito para el próximo inicio de sesión.
     writer = shutil.which("kwriteconfig6") or shutil.which("kwriteconfig5")
@@ -141,9 +202,10 @@ def _setup_kde() -> list[str]:
             cmd += ["--group", g]
         _run(*cmd, "--key", key, value)
 
-    write(["services", "org.kde.plasma.emojier.desktop"], "_launch", "Meta+Ctrl+Alt+Shift+Space")
-    write(["services", "emojis-linux.desktop"], "_launch", "Meta+.\tMeta+;")
-    return ["Cierra sesión y vuelve a entrar para activar Super+. en KDE Plasma."]
+    if "Meta+." in keys:
+        write(["services", EMOJIER[0]], EMOJIER[1], "Meta+Ctrl+Alt+Shift+Space")
+    write(["services", "emojis-linux.desktop"], "_launch", "\t".join(keys))
+    return [*notes, "Cierra sesión y vuelve a entrar para activar el atajo en KDE Plasma."]
 
 
 class ShortcutError(RuntimeError):
@@ -158,31 +220,45 @@ SETUP = {
 }
 
 
-# Gestores de ventanas en mosaico (habituales en Arch y CachyOS): los atajos viven en
-# el archivo de configuración del usuario, que no tocamos; se indica qué añadir.
-MANUAL = {
-    "hyprland": ("~/.config/hypr/hyprland.conf", [f"bind = SUPER, period, exec, {OPEN_CMD}"]),
-    "sway": ("~/.config/sway/config", [f"bindsym Mod4+period exec {OPEN_CMD}"]),
-    "niri": ("~/.config/niri/config.kdl (dentro de binds { })", ['Mod+Period { spawn "emojis-linux" "abrir"; }']),
-}
+def _manual_lines(desktop: str, key: str) -> tuple[str, list[str]] | None:
+    """Gestores en mosaico (habituales en Arch y CachyOS): los atajos viven en el archivo
+    de configuración del usuario, que no tocamos; se indica qué añadir."""
+    mods, name = split(key)
+    sym = keysym(name)
+    if desktop == "hyprland":
+        hypr = " ".join({"Meta": "SUPER", "Ctrl": "CTRL", "Alt": "ALT", "Shift": "SHIFT"}[m] for m in mods)
+        return "~/.config/hypr/hyprland.conf", [f"bind = {hypr}, {sym}, exec, {OPEN_CMD}"]
+    if desktop == "sway":
+        sway = "+".join({"Meta": "Mod4", "Ctrl": "Ctrl", "Alt": "Mod1", "Shift": "Shift"}[m] for m in mods)
+        return "~/.config/sway/config", [f"bindsym {sway}+{sym} exec {OPEN_CMD}"]
+    if desktop == "niri":
+        niri = "+".join({"Meta": "Mod", "Ctrl": "Ctrl", "Alt": "Alt", "Shift": "Shift"}[m] for m in mods)
+        return "~/.config/niri/config.kdl (dentro de binds { })", [f'{niri}+{sym} {{ spawn "emojis-linux" "abrir"; }}']
+    return None
 
 
-def setup_shortcuts(force: bool = False) -> list[str]:
-    """Configura los atajos una sola vez. Devuelve mensajes para mostrar al usuario."""
-    if config.SHORTCUTS_MARKER.exists() and not force:
-        return []
+def apply(keys: list[str], old: list[str] | None = None) -> list[str]:
+    """Pone estos atajos en el escritorio (y quita los anteriores). Devuelve mensajes."""
     desktop = config.desktop()
+    shown = " o ".join(label(k) for k in keys)
     func = SETUP.get(desktop)
     if func is not None:
         try:
-            notes = [f"Atajo configurado para {desktop}: Super+. (o Super+;) abre el panel de emojis.", *func()]
+            notes = [f"Atajo configurado para {desktop}: {shown} abre el panel de emojis.", *func(keys, old or [])]
         except ShortcutError as exc:
-            notes = [str(exc), f"  Super+. → {OPEN_CMD}"]
-    elif desktop in MANUAL:
-        path, lines = MANUAL[desktop]
-        notes = [f"Añade esta línea a {path}:", *lines]
+            notes = [str(exc), f"  {shown} → {OPEN_CMD}"]
+    elif (manual := _manual_lines(desktop, keys[0])) is not None:
+        path, lines = manual
+        notes = [f"Añade esta línea a {path} (y quita la del atajo anterior):", *lines]
     else:
-        notes = [f"Escritorio «{desktop}» no reconocido. Asigna a mano:", f"  Super+. → {OPEN_CMD}"]
+        notes = [f"Escritorio «{desktop}» no reconocido. Asigna a mano:", f"  {shown} → {OPEN_CMD}"]
     config.CONFIG_DIR.mkdir(parents=True, exist_ok=True)
     config.SHORTCUTS_MARKER.write_text(desktop + "\n", encoding="utf-8")
     return notes
+
+
+def setup_shortcuts(force: bool = False) -> list[str]:
+    """Configura el atajo guardado (o el predeterminado) la primera vez, o siempre con force."""
+    if config.SHORTCUTS_MARKER.exists() and not force:
+        return []
+    return apply(current_keys())

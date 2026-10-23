@@ -9,9 +9,13 @@ Terminal=false
 Categories=Utility;
 Keywords=emoji;emojis;símbolos;symbols;caritas;kaomoji;unicode;
 StartupNotify=false
-Actions=simbolos;
+Actions=simbolos;ajustes;
 X-KDE-Shortcuts=Meta+.,Meta+;
 
 [Desktop Action simbolos]
 Name=Símbolos
 Exec=emojis-linux simbolos
+
+[Desktop Action ajustes]
+Name=Cambiar el atajo de teclado
+Exec=emojis-linux ajustes
