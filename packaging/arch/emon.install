@@ -1,0 +1,12 @@
+post_install() {
+    echo ">> Abre «Emon» desde el menú una vez (o reinicia la sesión) para activar Super+."
+    echo ">> En Hyprland, Sway o niri, Emon te dirá qué línea añadir a tu configuración."
+}
+
+post_upgrade() {
+    echo ">> Reinicia Emon para usar la nueva versión: emon salir && emon segundo-plano &"
+}
+
+pre_remove() {
+    rm -rf /usr/lib/emon/emon/__pycache__
+}

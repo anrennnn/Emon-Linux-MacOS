@@ -5,9 +5,9 @@ import os
 import sys
 from pathlib import Path
 
-APP_ID = "emojis-linux"
-APP_NAME = "Emojis"
-VERSION = "0.2.0"
+APP_ID = "emon"
+APP_NAME = "Emon"
+VERSION = "0.3.0"
 
 # Como en Windows, la sección «Usados recientemente» guarda unos pocos.
 RECENT_LIMIT = 40
@@ -29,6 +29,26 @@ else:
     CONFIG_DIR = _xdg("XDG_CONFIG_HOME", ".config") / APP_ID
 SETTINGS_FILE = DATA_DIR / "ajustes.json"
 SHORTCUTS_MARKER = CONFIG_DIR / "atajos-configurados"
+
+# Hasta la 0.2 la app se llamaba «Emojis» (paquete y comando emojis-linux).
+OLD_ID = "emojis-linux"
+if IS_MACOS:
+    OLD_DATA_DIRS = [Path.home() / "Library" / "Application Support" / "Emojis"]
+else:
+    OLD_DATA_DIRS = [_xdg("XDG_DATA_HOME", ".local/share") / OLD_ID, _xdg("XDG_CONFIG_HOME", ".config") / OLD_ID]
+
+
+def migrate_old_settings() -> bool:
+    """Trae los ajustes de «Emojis» (recientes, tono, atajo) la primera vez. True si había."""
+    if SETTINGS_FILE.exists():
+        return False
+    for folder in OLD_DATA_DIRS:
+        old = folder / "ajustes.json"
+        if old.exists():
+            DATA_DIR.mkdir(parents=True, exist_ok=True)
+            SETTINGS_FILE.write_bytes(old.read_bytes())
+            return True
+    return False
 
 
 def session_type() -> str:

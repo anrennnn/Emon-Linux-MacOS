@@ -1,10 +1,10 @@
-# Maintainer: Emojis-Linux <emojis-linux@users.noreply.github.com>
+# Maintainer: Emon <emon@users.noreply.github.com>
 #
-# Emojis para Arch Linux, CachyOS, EndeavourOS y Manjaro.
+# Emon para Arch Linux, CachyOS, EndeavourOS y Manjaro.
 #   makepkg -si
 
-pkgname=emojis-linux
-pkgver=0.2.0
+pkgname=emon
+pkgver=0.3.0
 pkgrel=1
 _commit=1fbd7a18a968b238477ca8d3230c2c5bb5fc1138
 pkgdesc="Panel de emojis y símbolos al estilo de Windows (Super+.)"
@@ -27,7 +27,9 @@ optdepends=(
     'ydotool: pegar el emoji automáticamente en KDE Plasma y GNOME con Wayland'
     'qt6-wayland: ventana nativa en sesiones Wayland'
 )
-install=emojis-linux.install
+conflicts=('emojis-linux')
+replaces=('emojis-linux')  # hasta la 0.2 se llamaba así
+install=emon.install
 source=("$pkgname-$pkgver.tar.gz::$url/archive/$_commit.tar.gz")
 sha256sums=('6f6afa0b594177de88f1daaca8b283a5529037e5adcc2016a0f1fd9ceda4e6df')
 

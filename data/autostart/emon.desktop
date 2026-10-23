@@ -1,9 +1,9 @@
 [Desktop Entry]
 Type=Application
-Name=Emojis
+Name=Emon
 Comment=Tiene listo el panel de emojis para Super+.
-Exec=emojis-linux segundo-plano
-Icon=emojis-linux
+Exec=emon segundo-plano
+Icon=emon
 NoDisplay=true
 X-GNOME-Autostart-enabled=true
 X-GNOME-Autostart-Delay=3

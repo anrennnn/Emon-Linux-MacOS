@@ -2,7 +2,7 @@
 
 Cada escritorio guarda sus atajos en un sitio distinto, así que no hay una única
 forma de hacerlo. Se ejecuta al primer arranque, cuando el usuario elige otro
-atajo en la ventana de ajustes y con `emojis-linux atajos`.
+atajo en la ventana de ajustes y con `emon atajos`.
 
 Los atajos se guardan como texto de Qt («Meta+.», «Ctrl+Alt+E»); en Linux
 Meta es la tecla Super (la de Windows).
@@ -14,7 +14,9 @@ import subprocess
 
 from . import config
 
-OPEN_CMD = "emojis-linux abrir"
+OPEN_CMD = "emon abrir"
+# Hasta la 0.2 la app se llamaba «Emojis» y el comando era este: sus atajos se quitan.
+OLD_CMD = "emojis-linux abrir"
 # En macOS, Qt llama «Ctrl» a ⌘ y «Meta» a ⌃: el predeterminado es ⌃⌘. (⌘. es «cancelar»).
 DEFAULT_KEYS = ["Meta+Ctrl+.", "Meta+Ctrl+;"] if config.IS_MACOS else ["Meta+.", "Meta+;"]
 
@@ -94,10 +96,13 @@ GNOME_BASE = "/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/"
 
 def _setup_gnome(keys: list[str], _old: list[str]) -> list[str]:
     # GNOME solo admite una tecla por atajo personalizado: uno para cada combinación.
-    # Primero se quitan todos los de Emojis, por si antes había más.
-    paths = [p for p in _gsettings_list(GNOME_KEYS, "custom-keybindings") if "/emojis-linux-" not in p]
+    # Primero se quitan todos los de Emon, por si antes había más.
+    paths = [
+        p for p in _gsettings_list(GNOME_KEYS, "custom-keybindings")
+        if "/emon-" not in p and "/emojis-linux-" not in p
+    ]
     for n, key in enumerate(keys):
-        path = f"{GNOME_BASE}emojis-linux-{n}/"
+        path = f"{GNOME_BASE}emon-{n}/"
         paths.append(path)
         schema = f"{GNOME_KEYS}.custom-keybinding:{path}"
         _gsettings_set(schema, "name", "Panel de emojis")
@@ -114,8 +119,8 @@ CINNAMON_BASE = "/org/cinnamon/desktop/keybindings/custom-keybindings/"
 
 
 def _setup_cinnamon(keys: list[str], _old: list[str]) -> list[str]:
-    names = _gsettings_list(CINNAMON_KEYS, "custom-list")
-    slug = "custom-emojis-linux"
+    names = [n for n in _gsettings_list(CINNAMON_KEYS, "custom-list") if n != "custom-emojis-linux"]
+    slug = "custom-emon"
     if slug not in names:
         names.append(slug)
     schema = f"{CINNAMON_KEYS}.custom-keybinding:{CINNAMON_BASE}{slug}/"
@@ -130,6 +135,12 @@ def _setup_cinnamon(keys: list[str], _old: list[str]) -> list[str]:
 
 
 def _setup_xfce(keys: list[str], old: list[str]) -> list[str]:
+    # Atajos de la versión anterior («emojis-linux abrir»), sea cual sea la tecla.
+    listing = _run("xfconf-query", "-c", "xfce4-keyboard-shortcuts", "-l", "-v")
+    for line in listing.splitlines():
+        prop, _, value = line.partition(" ")
+        if value.strip() == OLD_CMD:
+            _run("xfconf-query", "-c", "xfce4-keyboard-shortcuts", "-p", prop, "-r")
     for key in old:
         prop = f"/commands/custom/{to_gtk(key)}"
         # Solo se borra si sigue siendo nuestro (el usuario pudo reasignarlo).
@@ -180,13 +191,15 @@ def _kglobalaccel_set(component: str, action: str, keys: list[int]) -> bool:
 
 def _setup_kde(keys: list[str], old: list[str]) -> list[str]:
     notes = []
-    changes = [("emojis-linux.desktop", "_launch", [_kde_code(k) for k in keys])]
+    # El atajo de la versión anterior («Emojis»); si nunca existió, el error da igual.
+    _kglobalaccel_set("emojis-linux.desktop", "_launch", [])
+    changes = [("emon.desktop", "_launch", [_kde_code(k) for k in keys])]
     if "Meta+." in keys:
         # El selector de emojis de Plasma usa Meta+. ; se le deja Meta+Ctrl+Alt+Mayús+Espacio.
         changes.insert(0, (*EMOJIER, [_META | _CTRL | _ALT | _SHIFT | _KEY_SPACE]))
         notes.append("El selector de emojis de KDE pasa a Meta+Ctrl+Alt+Mayús+Espacio.")
     elif "Meta+." in old:
-        # Emojis deja libre Meta+.: se le devuelve al selector de KDE.
+        # Emon deja libre Meta+.: se le devuelve al selector de KDE.
         changes.append((*EMOJIER, [_META | _KEY_PERIOD]))
     if all(_kglobalaccel_set(*change) for change in changes):
         return notes
@@ -204,7 +217,7 @@ def _setup_kde(keys: list[str], old: list[str]) -> list[str]:
 
     if "Meta+." in keys:
         write(["services", EMOJIER[0]], EMOJIER[1], "Meta+Ctrl+Alt+Shift+Space")
-    write(["services", "emojis-linux.desktop"], "_launch", "\t".join(keys))
+    write(["services", "emon.desktop"], "_launch", "\t".join(keys))
     return [*notes, "Cierra sesión y vuelve a entrar para activar el atajo en KDE Plasma."]
 
 
@@ -233,7 +246,7 @@ def _manual_lines(desktop: str, key: str) -> tuple[str, list[str]] | None:
         return "~/.config/sway/config", [f"bindsym {sway}+{sym} exec {OPEN_CMD}"]
     if desktop == "niri":
         niri = "+".join({"Meta": "Mod", "Ctrl": "Ctrl", "Alt": "Alt", "Shift": "Shift"}[m] for m in mods)
-        return "~/.config/niri/config.kdl (dentro de binds { })", [f'{niri}+{sym} {{ spawn "emojis-linux" "abrir"; }}']
+        return "~/.config/niri/config.kdl (dentro de binds { })", [f'{niri}+{sym} {{ spawn "emon" "abrir"; }}']
     return None
 
 

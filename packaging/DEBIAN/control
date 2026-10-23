@@ -1,13 +1,16 @@
-Package: emojis-linux
+Package: emon
 Version: @VERSION@
 Section: utils
 Priority: optional
 Architecture: all
 Depends: python3 (>= 3.10), python3-pyqt6 | python3-pyqt5, python3-gi, fonts-noto-color-emoji, libnotify-bin
 Recommends: xdotool, wtype
+Conflicts: emojis-linux
+Replaces: emojis-linux
+Provides: emojis-linux
 Suggests: ydotool
 Installed-Size: @SIZE@
-Maintainer: Emojis-Linux <emojis-linux@users.noreply.github.com>
+Maintainer: Emon <emon@users.noreply.github.com>
 Homepage: https://github.com/anrennnn/EMON-Linux-MacOS
 Description: Panel de emojis y símbolos al estilo de Windows (Super+.)
  Super+. (o Super+;) abre un panel con todos los emojis de Unicode, por

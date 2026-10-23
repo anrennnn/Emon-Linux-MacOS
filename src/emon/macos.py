@@ -4,7 +4,7 @@
   con RegisterEventHotKey de Carbon, que no necesita permisos especiales. ⌘. no
   se usa porque en macOS es «cancelar».
 * Para escribir en otra app se envían pulsaciones con CGEventPost (Quartz).
-  macOS solo lo permite si el usuario da permiso de Accesibilidad a Emojis;
+  macOS solo lo permite si el usuario da permiso de Accesibilidad a Emon;
   sin él, el emoji queda copiado y se avisa para pegarlo con ⌘V.
 """
 
@@ -232,28 +232,28 @@ def system_locale() -> str:
     return out.split("@")[0]
 
 
-LAUNCH_AGENT = Path.home() / "Library" / "LaunchAgents" / "io.github.anrennnn.emojis.plist"
+LAUNCH_AGENT = Path.home() / "Library" / "LaunchAgents" / "io.github.anrennnn.emon.plist"
 
 
 def setup_login_item() -> list[str]:
-    """La primera vez: arrancar Emojis al iniciar sesión y explicar el atajo."""
+    """La primera vez: arrancar Emon al iniciar sesión y explicar el atajo."""
     if config.SHORTCUTS_MARKER.exists():
         return []
     from .shortcuts import current_keys, label
 
     notes = [f"Pulsa {label(current_keys()[0])} en cualquier app para abrir los emojis."]
     if getattr(sys, "frozen", False):
-        # Dentro de Emojis.app (PyInstaller): sys.executable es el ejecutable de la app.
+        # Dentro de Emon.app (PyInstaller): sys.executable es el ejecutable de la app.
         LAUNCH_AGENT.parent.mkdir(parents=True, exist_ok=True)
         LAUNCH_AGENT.write_bytes(plistlib.dumps({
-            "Label": "io.github.anrennnn.emojis",
+            "Label": "io.github.anrennnn.emon",
             "ProgramArguments": [sys.executable, "segundo-plano"],
             "RunAtLoad": True,
             "ProcessType": "Interactive",
         }))
-        notes.append("Emojis se abrirá solo al iniciar sesión.")
+        notes.append("Emon se abrirá solo al iniciar sesión.")
     if not accessibility_allowed():
-        notes.append("Para que el emoji se escriba solo, permite Emojis en Ajustes → Privacidad → Accesibilidad.")
+        notes.append("Para que el emoji se escriba solo, permite Emon en Ajustes → Privacidad → Accesibilidad.")
     config.CONFIG_DIR.mkdir(parents=True, exist_ok=True)
     config.SHORTCUTS_MARKER.write_text("macos\n", encoding="utf-8")
     return notes
@@ -261,3 +261,8 @@ def setup_login_item() -> list[str]:
 
 def remove_login_item():
     LAUNCH_AGENT.unlink(missing_ok=True)
+
+
+def remove_old_login_item():
+    """Hasta la 0.2 la app se llamaba Emojis.app; su arranque automático ya no sirve."""
+    (LAUNCH_AGENT.parent / "io.github.anrennnn.emojis.plist").unlink(missing_ok=True)

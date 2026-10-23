@@ -1,19 +1,19 @@
-# PyInstaller: construye dist/Emojis.app. Se usa desde macos/construir.sh.
+# PyInstaller: construye dist/Emon.app. Se usa desde macos/construir.sh.
 import os
 import re
 
 ROOT = os.path.abspath(os.path.join(SPECPATH, ".."))
 SRC = os.path.join(ROOT, "src")
-with open(os.path.join(SRC, "emojis_linux", "config.py"), encoding="utf-8") as fh:
+with open(os.path.join(SRC, "emon", "config.py"), encoding="utf-8") as fh:
     VERSION = re.search(r'^VERSION = "(.*)"', fh.read(), re.M).group(1)
 
 a = Analysis(
     [os.path.join(SPECPATH, "emojis.py")],
     pathex=[SRC],
-    datas=[(os.path.join(SRC, "emojis_linux", "datos"), "emojis_linux/datos")],
+    datas=[(os.path.join(SRC, "emon", "datos"), "emon/datos")],
     hiddenimports=[
-        "emojis_linux.macos", "emojis_linux.picker", "emojis_linux.catalog",
-        "emojis_linux.inserter", "AppKit", "Quartz",
+        "emon.macos", "emon.picker", "emon.catalog",
+        "emon.inserter", "AppKit", "Quartz",
     ],
     excludes=["tkinter", "PyQt6.QtQml", "PyQt6.QtQuick", "PyQt6.QtWebEngineCore", "PyQt6.QtMultimedia"],
 )
@@ -21,19 +21,19 @@ pyz = PYZ(a.pure)
 exe = EXE(
     pyz, a.scripts, [],
     exclude_binaries=True,
-    name="Emojis",
+    name="Emon",
     console=False,
     argv_emulation=False,
 )
-coll = COLLECT(exe, a.binaries, a.datas, name="Emojis")
+coll = COLLECT(exe, a.binaries, a.datas, name="Emon")
 app = BUNDLE(
     coll,
-    name="Emojis.app",
-    icon=os.path.join(ROOT, "build", "Emojis.icns"),
-    bundle_identifier="io.github.anrennnn.emojis",
+    name="Emon.app",
+    icon=os.path.join(ROOT, "build", "Emon.icns"),
+    bundle_identifier="io.github.anrennnn.emon",
     version=VERSION,
     info_plist={
-        "CFBundleDisplayName": "Emojis",
+        "CFBundleDisplayName": "Emon",
         "CFBundleShortVersionString": VERSION,
         "CFBundleVersion": VERSION,
         "LSUIElement": True,  # sin icono en el Dock: es un panel, como el de Windows

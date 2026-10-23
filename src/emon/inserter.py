@@ -163,7 +163,7 @@ def _insert_macos(text: str, target: Target, how: str) -> str:
             macos.paste()
             _restore_clipboard(text)
         return ""
-    return "Copiado: pulsa ⌘V para pegarlo. Para que se escriba solo, da permiso de Accesibilidad a Emojis."
+    return "Copiado: pulsa ⌘V para pegarlo. Para que se escriba solo, da permiso de Accesibilidad a Emon."
 
 
 def _ydotool_ready() -> bool:

@@ -65,7 +65,7 @@ def system_locales() -> list[str]:
     """
     available = {p.name.removesuffix(".json.gz") for p in (config.DATA_FILES / "nombres").glob("*.json.gz")}
     result = []
-    for var in ("EMOJIS_LINUX_IDIOMA", "LC_ALL", "LC_MESSAGES", "LANGUAGE", "LANG"):
+    for var in ("EMON_IDIOMA", "LC_ALL", "LC_MESSAGES", "LANGUAGE", "LANG"):
         for raw in (os.environ.get(var) or "").split(":"):
             raw = raw.split(".")[0].split("@")[0]
             if not raw or raw in ("C", "POSIX"):
@@ -85,8 +85,8 @@ def system_locales() -> list[str]:
     if not result and config.IS_MACOS:
         from .macos import system_locale
 
-        os.environ.setdefault("EMOJIS_LINUX_IDIOMA", system_locale())
-        if os.environ["EMOJIS_LINUX_IDIOMA"]:
+        os.environ.setdefault("EMON_IDIOMA", system_locale())
+        if os.environ["EMON_IDIOMA"]:
             return system_locales()
     if "en" not in result:
         result.append("en")

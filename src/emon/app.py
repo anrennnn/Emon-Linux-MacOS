@@ -1,7 +1,7 @@
-"""Proceso en segundo plano y comandos de Emojis.
+"""Proceso en segundo plano y comandos de Emon.
 
 Un único proceso por usuario tiene los emojis cargados y muestra el panel al
-instante. El atajo Super+. lanza `emojis-linux abrir`, que solo envía la orden
+instante. El atajo Super+. lanza `emon abrir`, que solo envía la orden
 por un socket local y termina. Si el proceso de fondo no está corriendo, el
 primero que se lance se convierte en él.
 """
@@ -18,9 +18,9 @@ from .qt import QApplication, QLocalServer, QLocalSocket, QTimer, prepare_applic
 SOCKET_NAME = f"{config.APP_ID}-{os.getuid()}"
 
 
-def send_to_daemon(command: str) -> bool:
+def send_to_daemon(command: str, name: str = SOCKET_NAME) -> bool:
     sock = QLocalSocket()
-    sock.connectToServer(SOCKET_NAME)
+    sock.connectToServer(name)
     if not sock.waitForConnected(500):
         return False
     sock.write(command.encode() + b"\n")
@@ -133,7 +133,7 @@ def _prepare_platform():
 
 def main(argv=None):
     parser = argparse.ArgumentParser(
-        prog="emojis-linux",
+        prog="emon",
         description="Panel de emojis y símbolos al estilo de Windows (Super+. en Linux, ⌃⌘. en macOS).",
     )
     sub = parser.add_subparsers(dest="command")
@@ -158,7 +158,7 @@ def main(argv=None):
             print(line)
         return 0
 
-    # Sin argumentos (menú de aplicaciones o Emojis.app en el Finder) se abre el panel;
+    # Sin argumentos (menú de aplicaciones o Emon.app en el Finder) se abre el panel;
     # al iniciar sesión se usa «segundo-plano», que solo deja el proceso listo.
     command = {"abrir": "abrir", "simbolos": "simbolos", "ajustes": "ajustes", "salir": "salir"}.get(
         args.command or "abrir", ""
@@ -179,14 +179,21 @@ def main(argv=None):
     if args.command == "segundo-plano" and send_to_daemon("ping"):
         return 0  # ya hay uno corriendo
 
-    if config.IS_MACOS:
-        from .macos import setup_login_item
+    # Si viene de «Emojis» (0.1–0.2): cierra el proceso antiguo y trae sus ajustes.
+    send_to_daemon("salir", f"{config.OLD_ID}-{os.getuid()}")
+    migrated = config.migrate_old_settings()
 
+    if config.IS_MACOS:
+        from .macos import remove_old_login_item, setup_login_item
+
+        remove_old_login_item()
         messages = setup_login_item()
     else:
         from .shortcuts import setup_shortcuts
 
         messages = setup_shortcuts()
+    if migrated:
+        messages.insert(0, f"«Emojis» ahora se llama {config.APP_NAME}: tus recientes y tu atajo se mantienen.")
     daemon = Daemon(app)
     if messages:
         notify(config.APP_NAME, "\n".join(messages))

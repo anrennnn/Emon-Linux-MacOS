@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Genera los datos de src/emojis_linux/datos a partir de Unicode y CLDR.
+"""Genera los datos de src/emon/datos a partir de Unicode y CLDR.
 
 Uso:
     herramientas/generar_datos.py EMOJI_TEST CLDR_FULL CLDR_DERIVED
@@ -22,7 +22,7 @@ import sys
 import unicodedata
 from pathlib import Path
 
-OUT = Path(__file__).resolve().parent.parent / "src" / "emojis_linux" / "datos"
+OUT = Path(__file__).resolve().parent.parent / "src" / "emon" / "datos"
 
 TONES = "\U0001F3FB\U0001F3FC\U0001F3FD\U0001F3FE\U0001F3FF"
 VS16 = "️"

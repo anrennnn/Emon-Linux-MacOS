@@ -2,8 +2,8 @@
 
 En Wayland, GNOME y KDE no dejan que un programa teclee en la ventana de otro.
 La vía oficial es el portal org.freedesktop.portal.RemoteDesktop: la primera vez
-el escritorio pregunta al usuario si Emojis puede controlar el teclado, y
-después Emojis pulsa Ctrl+V por él. Los emojis no se pueden teclear directamente
+el escritorio pregunta al usuario si Emon puede controlar el teclado, y
+después Emon pulsa Ctrl+V por él. Los emojis no se pueden teclear directamente
 (GNOME solo acepta teclas que existan en la distribución del teclado), así que
 se copia el emoji y se pega.
 

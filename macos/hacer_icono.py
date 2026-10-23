@@ -1,4 +1,4 @@
-"""Convierte data/icons/emojis-linux.svg en el iconset que iconutil pasa a .icns."""
+"""Convierte data/icons/emon.svg en el iconset que iconutil pasa a .icns."""
 
 import sys
 from pathlib import Path

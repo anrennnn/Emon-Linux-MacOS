@@ -1,4 +1,4 @@
-Name:           emojis-linux
+Name:           emon
 Version:        @VERSION@
 Release:        1%{?dist}
 Summary:        Panel de emojis y símbolos al estilo de Windows (Super+.)
@@ -6,6 +6,10 @@ License:        MIT AND Unicode-3.0
 URL:            https://github.com/anrennnn/EMON-Linux-MacOS
 Source0:        %{name}-%{version}.tar.gz
 BuildArch:      noarch
+
+# Hasta la 0.2 se llamaba emojis-linux: dnf la sustituye al actualizar.
+Obsoletes:      emojis-linux < 0.3.0
+Provides:       emojis-linux = %{version}-%{release}
 
 BuildRequires:  make
 Requires:       python3
@@ -38,15 +42,17 @@ make install DESTDIR=%{buildroot} PREFIX=%{_prefix} SYSCONFDIR=%{_sysconfdir} \
 %files
 %license %{_licensedir}/%{name}/LICENSE
 %license %{_licensedir}/%{name}/LICENSE-UNICODE
-%{_bindir}/emojis-linux
+%{_bindir}/emon
 %{_prefix}/lib/%{name}/
-%{_datadir}/applications/emojis-linux.desktop
-%{_datadir}/icons/hicolor/scalable/apps/emojis-linux.svg
-%config(noreplace) %{_sysconfdir}/xdg/autostart/emojis-linux.desktop
+%{_datadir}/applications/emon.desktop
+%{_datadir}/icons/hicolor/scalable/apps/emon.svg
+%config(noreplace) %{_sysconfdir}/xdg/autostart/emon.desktop
 
 %changelog
-* Fri Oct 23 2026 Emojis-Linux <emojis-linux@users.noreply.github.com> - 0.2.0-1
+* Fri Oct 23 2026 Emon <emon@users.noreply.github.com> - 0.3.0-1
+- La app pasa a llamarse Emon (antes Emojis, paquete emojis-linux).
+* Fri Oct 23 2026 Emon <emon@users.noreply.github.com> - 0.2.0-1
 - Pega solo en GNOME y KDE con Wayland (portal RemoteDesktop) y recupera el portapapeles.
 - Colores del escritorio (claro/oscuro, acento) y ventana para elegir el atajo.
-* Fri Oct 23 2026 Emojis-Linux <emojis-linux@users.noreply.github.com> - 0.1.0-1
+* Fri Oct 23 2026 Emon <emon@users.noreply.github.com> - 0.1.0-1
 - Primera versión: emojis de Unicode 18.0, símbolos, búsqueda y tonos de piel.
