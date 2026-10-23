@@ -8,7 +8,7 @@ with open(os.path.join(SRC, "emon", "config.py"), encoding="utf-8") as fh:
     VERSION = re.search(r'^VERSION = "(.*)"', fh.read(), re.M).group(1)
 
 a = Analysis(
-    [os.path.join(SPECPATH, "emojis.py")],
+    [os.path.join(SPECPATH, "lanzador.py")],
     pathex=[SRC],
     datas=[(os.path.join(SRC, "emon", "datos"), "emon/datos")],
     hiddenimports=[
