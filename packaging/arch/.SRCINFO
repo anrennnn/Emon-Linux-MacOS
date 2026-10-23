@@ -21,7 +21,7 @@ pkgbase = emon
 	optdepends = qt6-wayland: ventana nativa en sesiones Wayland
 	conflicts = emojis-linux
 	replaces = emojis-linux
-	source = emon-0.3.0.tar.gz::https://github.com/anrennnn/Emon-Linux-MacOS/archive/816e6efa9a93504a11f89d1375825bd0b2dc54ec.tar.gz
-	sha256sums = 3559d30520471fa18b20f91e8a3e7ff95e0622bcdf226220804e0209047acb48
+	source = emon-0.3.0.tar.gz::https://github.com/anrennnn/Emon-Linux-MacOS/archive/571f04a4313dc328eb9d72cfde7782d5df26ca80.tar.gz
+	sha256sums = e25ad4be4d2b0abee8c9446c0202eefa08f7d926e7ef1237400081b872b2794e
 
 pkgname = emon
