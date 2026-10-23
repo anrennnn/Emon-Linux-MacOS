@@ -1,0 +1,61 @@
+# Construye Emojis.app y el .dmg en Macs de GitHub (Apple Silicon e Intel), comprueba
+# que la app arranca y abre el panel, y publica los .dmg en la versión «macos».
+name: macOS
+
+on:
+  push:
+    branches: [main]
+    paths: ["src/**", "macos/**", "data/icons/**", ".github/workflows/macos.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  construir:
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: [macos-15, macos-15-intel]
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Construir Emojis.app y el .dmg
+        run: macos/construir.sh
+
+      - name: Probar que la app arranca y abre el panel
+        run: |
+          APP=dist/Emojis.app/Contents/MacOS/Emojis
+          "$APP" version
+          "$APP" segundo-plano > arranque.log 2>&1 &
+          sleep 15
+          pgrep -f "Emojis.app/Contents/MacOS/Emojis" > /dev/null || { cat arranque.log; exit 1; }
+          "$APP" abrir
+          sleep 4
+          screencapture -x "captura-$(uname -m).png" || true
+          "$APP" salir
+          sleep 2
+          cat arranque.log
+          if grep -q Traceback arranque.log; then exit 1; fi
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Emojis-macOS-${{ matrix.runner }}
+          path: |
+            dist/*.dmg
+            captura-*.png
+
+      - name: Publicar en la versión «macos»
+        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release view macos > /dev/null 2>&1 || \
+            gh release create macos --prerelease --title "Emojis para macOS" \
+              --notes "Se actualiza sola con cada cambio en main. Descarga el .dmg de tu Mac: arm64 = Apple Silicon (M1, M2, M3, M4…), x86_64 = Intel."
+          gh release upload macos dist/*.dmg captura-*.png --clobber

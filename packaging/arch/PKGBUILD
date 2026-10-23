@@ -1,0 +1,37 @@
+# Maintainer: Emojis-Linux <emojis-linux@users.noreply.github.com>
+#
+# Emojis para Arch Linux, CachyOS, EndeavourOS y Manjaro.
+#   makepkg -si
+
+pkgname=emojis-linux
+pkgver=0.1.0
+pkgrel=1
+_commit=@COMMIT@
+pkgdesc="Panel de emojis y símbolos al estilo de Windows (Super+.)"
+arch=('any')
+url="https://github.com/anrennnn/EMON-Linux-MacOS"
+license=('MIT' 'Unicode-3.0')
+depends=(
+    'python'
+    'python-pyqt6'
+    'qt6-base'
+    'noto-fonts-emoji'
+    'libnotify'
+    'hicolor-icon-theme'
+)
+makedepends=('make')
+optdepends=(
+    'xdotool: escribir el emoji en la aplicación activa (X11)'
+    'wtype: escribir el emoji en la aplicación activa (Hyprland, Sway, niri)'
+    'ydotool: pegar el emoji automáticamente en KDE Plasma y GNOME con Wayland'
+    'qt6-wayland: ventana nativa en sesiones Wayland'
+)
+install=emojis-linux.install
+source=("$pkgname-$pkgver.tar.gz::$url/archive/$_commit.tar.gz")
+sha256sums=('@SHA256@')
+
+package() {
+    cd "EMON-Linux-MacOS-$_commit"
+    make install DESTDIR="$pkgdir" PREFIX=/usr \
+        DOCDIR=/usr/share/licenses/$pkgname LICENSE_NAME=LICENSE
+}

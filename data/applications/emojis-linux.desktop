@@ -1,0 +1,17 @@
+[Desktop Entry]
+Type=Application
+Name=Emojis
+GenericName=Panel de emojis
+Comment=Emojis y símbolos al estilo de Windows (Super+.)
+Exec=emojis-linux abrir
+Icon=emojis-linux
+Terminal=false
+Categories=Utility;
+Keywords=emoji;emojis;símbolos;symbols;caritas;kaomoji;unicode;
+StartupNotify=false
+Actions=simbolos;
+X-KDE-Shortcuts=Meta+.,Meta+;
+
+[Desktop Action simbolos]
+Name=Símbolos
+Exec=emojis-linux simbolos

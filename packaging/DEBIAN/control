@@ -1,0 +1,21 @@
+Package: emojis-linux
+Version: @VERSION@
+Section: utils
+Priority: optional
+Architecture: all
+Depends: python3 (>= 3.10), python3-pyqt6, fonts-noto-color-emoji, libnotify-bin
+Recommends: xdotool, wtype
+Suggests: ydotool
+Installed-Size: @SIZE@
+Maintainer: Emojis-Linux <emojis-linux@users.noreply.github.com>
+Homepage: https://github.com/anrennnn/EMON-Linux-MacOS
+Description: Panel de emojis y símbolos al estilo de Windows (Super+.)
+ Super+. (o Super+;) abre un panel con todos los emojis de Unicode, por
+ categorías, con búsqueda en el idioma del sistema y en inglés, usados
+ recientemente y tonos de piel. El emoji elegido se escribe en la aplicación
+ que tenía el foco.
+ .
+ Incluye una pestaña de símbolos: puntuación, moneda, letras latinas,
+ geométricos, matemáticos, flechas y letras griegas y cirílicas.
+ .
+ Funciona en KDE Plasma, GNOME, Cinnamon y XFCE, en X11 y Wayland.
