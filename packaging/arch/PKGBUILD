@@ -6,7 +6,7 @@
 pkgname=emojis-linux
 pkgver=0.2.0
 pkgrel=1
-_commit=2a82cb547f5166df475e003cd7cc2a9b27191529
+_commit=1fbd7a18a968b238477ca8d3230c2c5bb5fc1138
 pkgdesc="Panel de emojis y símbolos al estilo de Windows (Super+.)"
 arch=('any')
 url="https://github.com/anrennnn/EMON-Linux-MacOS"
@@ -29,7 +29,7 @@ optdepends=(
 )
 install=emojis-linux.install
 source=("$pkgname-$pkgver.tar.gz::$url/archive/$_commit.tar.gz")
-sha256sums=('ad7b0ca603d849ce40165385976f480b3c6d05539e5d6f768511c8be6a7cb220')
+sha256sums=('6f6afa0b594177de88f1daaca8b283a5529037e5adcc2016a0f1fd9ceda4e6df')
 
 package() {
     cd "EMON-Linux-MacOS-$_commit"

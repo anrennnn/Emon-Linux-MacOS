@@ -1,6 +1,6 @@
 pkgbase = emojis-linux
 	pkgdesc = Panel de emojis y símbolos al estilo de Windows (Super+.)
-	pkgver = 0.1.0
+	pkgver = 0.2.0
 	pkgrel = 1
 	url = https://github.com/anrennnn/EMON-Linux-MacOS
 	install = emojis-linux.install
@@ -10,6 +10,7 @@ pkgbase = emojis-linux
 	makedepends = make
 	depends = python
 	depends = python-pyqt6
+	depends = python-gobject
 	depends = qt6-base
 	depends = noto-fonts-emoji
 	depends = libnotify
@@ -18,7 +19,7 @@ pkgbase = emojis-linux
 	optdepends = wtype: escribir el emoji en la aplicación activa (Hyprland, Sway, niri)
 	optdepends = ydotool: pegar el emoji automáticamente en KDE Plasma y GNOME con Wayland
 	optdepends = qt6-wayland: ventana nativa en sesiones Wayland
-	source = emojis-linux-0.1.0.tar.gz::https://github.com/anrennnn/EMON-Linux-MacOS/archive/2a82cb547f5166df475e003cd7cc2a9b27191529.tar.gz
-	sha256sums = ad7b0ca603d849ce40165385976f480b3c6d05539e5d6f768511c8be6a7cb220
+	source = emojis-linux-0.2.0.tar.gz::https://github.com/anrennnn/EMON-Linux-MacOS/archive/1fbd7a18a968b238477ca8d3230c2c5bb5fc1138.tar.gz
+	sha256sums = 6f6afa0b594177de88f1daaca8b283a5529037e5adcc2016a0f1fd9ceda4e6df
 
 pkgname = emojis-linux
