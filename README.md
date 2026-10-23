@@ -20,64 +20,101 @@ escribe donde estabas.
 Funciona en **KDE Plasma, GNOME, Cinnamon y XFCE**, en X11 y Wayland, en
 Hyprland, Sway y niri, y en **macOS 12 o más reciente** (Apple Silicon e Intel).
 
+El panel toma los colores de tu escritorio. De izquierda a derecha: Zorin OS
+con el tema verde claro, Zorin OS oscuro y el tema por defecto.
+
 | Emojis por categorías | Búsqueda en español | Símbolos |
 | --- | --- | --- |
 | ![Panel de emojis](docs/img/panel-emojis.png) | ![Búsqueda de «corazon»](docs/img/busqueda.png) | ![Pestaña de símbolos](docs/img/simbolos.png) |
 
-## Instalación
+## Instalación y primeros pasos
 
-Descarga el paquete de tu distribución desde la carpeta [`instalador/`](instalador).
+Elige tu sistema, copia los comandos en la terminal y sigue los pasos. En todos
+los casos el último paso es el mismo: **abrir Emojis una vez**.
 
-**Debian, Ubuntu, Linux Mint, Pop!\_OS, Zorin**
+### Debian, Ubuntu, Linux Mint, Pop!\_OS y Zorin OS
 
-Lo más fácil es copiar esto en la terminal (descarga el paquete e instala):
+1. Instala (copia las dos líneas en la terminal):
 
-```sh
-wget -O /tmp/emojis-linux.deb https://github.com/anrennnn/EMON-Linux-MacOS/raw/main/instalador/emojis-linux_0.1.0_all.deb
-sudo apt install /tmp/emojis-linux.deb
-```
+   ```sh
+   wget -O /tmp/emojis-linux.deb https://github.com/anrennnn/EMON-Linux-MacOS/raw/main/instalador/emojis-linux_0.2.0_all.deb
+   sudo apt install /tmp/emojis-linux.deb
+   ```
 
-Si lo descargaste con el navegador, entra antes en la carpeta donde está
-(`cd ~/Descargas`) y usa `sudo apt install ./emojis-linux_0.1.0_all.deb`. Si apt
-dice «Se ha suministrado el fichero no admitido», es que el archivo no está en
-la carpeta donde estás.
+2. Ábrelo una vez: pulsa la tecla Super (la de Windows), escribe **Emojis** y
+   ábrelo. Esa primera vez configura el atajo y se queda en marcha; desde
+   entonces arranca solo al iniciar sesión.
+3. Pulsa **Super + .** en cualquier sitio donde escribas, busca el emoji y haz
+   clic o pulsa Enter.
+4. **Solo en GNOME o KDE con Wayland** (lo normal en Ubuntu, Zorin y Pop!\_OS):
+   la primera vez que elijas un emoji, el escritorio te preguntará si Emojis
+   puede **controlar el teclado** («Permitir control remoto» o parecido). Acepta:
+   es lo que permite que el emoji se pegue solo, igual que en Windows.
 
-Funciona desde Ubuntu 22.04 (Linux Mint 21, Zorin OS 17, Pop!\_OS 22.04), que
-usan PyQt5, hasta las versiones actuales con PyQt6.
+Funciona desde Ubuntu 22.04 (Linux Mint 21, Zorin OS 17, Pop!\_OS 22.04).
 
-**Fedora y Nobara**
+> ¿apt dice «Se ha suministrado el fichero no admitido»? Es que el archivo no
+> está en la carpeta donde estás. Usa los comandos de arriba, o entra antes en
+> la carpeta de descargas: `cd ~/Descargas`.
 
-```sh
-sudo dnf install ./emojis-linux-0.1.0-1.noarch.rpm
-```
+### Fedora y Nobara
 
-**Arch Linux, CachyOS, EndeavourOS y Manjaro**
+1. Instala:
 
-```sh
-sudo pacman -U emojis-linux-0.1.0-1-any.pkg.tar.zst
-```
+   ```sh
+   sudo dnf install https://github.com/anrennnn/EMON-Linux-MacOS/raw/main/instalador/emojis-linux-0.2.0-1.noarch.rpm
+   ```
 
-o, desde el código: `cd packaging/arch && makepkg -si`.
+2. Ábrelo una vez desde el menú de aplicaciones (**Emojis**).
+3. Pulsa **Super + .** en cualquier sitio donde escribas.
+4. Fedora usa Wayland: la primera vez que elijas un emoji, acepta el permiso
+   para controlar el teclado que pide el escritorio.
 
-Después abre **Emojis** desde el menú de aplicaciones una vez, o cierra sesión y
-vuelve a entrar. Desde ese momento Super + . abre el panel.
+### Arch Linux, CachyOS, EndeavourOS y Manjaro
 
-**macOS**
+1. Instala:
+
+   ```sh
+   curl -LO https://github.com/anrennnn/EMON-Linux-MacOS/raw/main/instalador/emojis-linux-0.2.0-1-any.pkg.tar.zst
+   sudo pacman -U emojis-linux-0.2.0-1-any.pkg.tar.zst
+   ```
+
+   o desde el código: `git clone https://github.com/anrennnn/EMON-Linux-MacOS && cd EMON-Linux-MacOS/packaging/arch && makepkg -si`.
+
+2. Ábrelo una vez desde el menú de aplicaciones (**Emojis**).
+3. Pulsa **Super + .** en cualquier sitio donde escribas. En KDE Plasma (lo que
+   trae CachyOS) acepta el permiso para controlar el teclado la primera vez.
+4. En **Hyprland, Sway o niri**, al abrirlo te dirá qué línea añadir a tu
+   configuración para el atajo (ver más abajo), e instala `wtype`
+   (`sudo pacman -S wtype`) para que el emoji se escriba solo.
+
+### macOS
 
 1. Descarga el `.dmg` de tu Mac desde la versión
    [«Emojis para macOS»](https://github.com/anrennnn/EMON-Linux-MacOS/releases/tag/macos):
    `arm64` para Apple Silicon (M1, M2, M3, M4…) y `x86_64` para Mac con Intel.
 2. Ábrelo y arrastra **Emojis** a **Aplicaciones**.
-3. La primera vez, macOS dirá que no puede verificar la app (no está firmada
-   por Apple). Ve a **Ajustes del Sistema → Privacidad y seguridad**, baja hasta
-   «Emojis se bloqueó» y pulsa **Abrir igualmente**.
-4. Para que el emoji se escriba solo en la otra app, activa Emojis en
-   **Ajustes del Sistema → Privacidad y seguridad → Accesibilidad**. Sin ese
-   permiso el emoji se copia y lo pegas con ⌘V.
+3. Abre Emojis. La primera vez, macOS dirá que no puede verificar la app (no
+   está firmada por Apple): ve a **Ajustes del Sistema → Privacidad y
+   seguridad**, baja hasta «Emojis se bloqueó» y pulsa **Abrir igualmente**.
+4. Activa Emojis en **Ajustes del Sistema → Privacidad y seguridad →
+   Accesibilidad**, para que el emoji se escriba solo en la otra app.
+5. Pulsa **⌃⌘.** (Control + Comando + punto) en cualquier sitio donde escribas.
 
-Emojis no tiene icono en el Dock: queda esperando el atajo **⌃⌘.** (Control +
-Comando + punto) o **⌃⌘;**, y se abre solo al iniciar sesión. ⌘. no se usa
-porque en macOS significa «cancelar» en todas las apps.
+Emojis no tiene icono en el Dock y se abre solo al iniciar sesión. ⌘. no se
+usa porque en macOS significa «cancelar» en todas las apps.
+
+### Si algo no funciona
+
+- **Super + . no hace nada:** escribe `emojis-linux atajos` en la terminal; te
+  dirá qué ha configurado. También puedes elegir otro atajo con ⚙ (ver «Cambiar
+  el atajo»).
+- **El emoji se copia pero no se pega solo:** en GNOME o KDE con Wayland, es que
+  no se aceptó el permiso de controlar el teclado. Cierra Emojis
+  (`emojis-linux salir`), vuelve a abrirlo y acéptalo al elegir el siguiente
+  emoji. Mientras tanto, pégalo con Ctrl + V.
+- **En una terminal** el emoji no se pega con Ctrl + V (las terminales usan
+  Ctrl + Mayús + V): pégalo a mano o usa una sesión X11.
 
 ## Uso
 
@@ -118,19 +155,31 @@ la sesión:
 | Sesión | Qué pasa | Necesita |
 | --- | --- | --- |
 | X11 (cualquier escritorio) | Se escribe directamente; el portapapeles no se toca | `xdotool` (se instala solo) |
-| Wayland: Hyprland, Sway, niri, Wayfire | Se escribe directamente | `wtype` (se instala solo en Debian/Fedora) |
-| Wayland: GNOME y KDE Plasma | Se copia y se pega solo | `ydotool` con su servicio activo |
-| Wayland: GNOME y KDE Plasma sin ydotool | Se copia y aparece un aviso para pulsar Ctrl+V | — |
+| Wayland: Hyprland, Sway, niri, Wayfire | Se escribe directamente | `wtype` |
+| Wayland: GNOME y KDE Plasma | Se pega solo; después el portapapeles vuelve a tener lo que había | Aceptar el permiso de controlar el teclado (una vez) |
 | macOS | Se escribe directamente | Permiso de Accesibilidad |
-| macOS sin permiso | Se copia y aparece un aviso para pulsar ⌘V | — |
 
 GNOME y KDE en Wayland no dejan, por diseño, que un programa teclee en la
-ventana de otro. Para que pegue solo, activa ydotool:
+ventana de otro. Emojis usa la vía oficial, el portal *RemoteDesktop*: el
+escritorio pregunta una vez si Emojis puede controlar el teclado y, a partir de
+ahí, Emojis copia el emoji, pulsa Ctrl + V por ti y deja el portapapeles como
+estaba. En escritorios recientes el permiso se recuerda; en los más antiguos
+(GNOME 42–45) se vuelve a pedir una vez por sesión.
+
+Si prefieres no usar el portal, `ydotool` con su servicio activo también vale:
 
 ```sh
 sudo apt install ydotool        # o: sudo dnf install ydotool / sudo pacman -S ydotool
 systemctl --user enable --now ydotool
 ```
+
+## Aspecto
+
+El panel usa los colores de tu escritorio, no los de Windows: claro u oscuro
+según tu tema, el color de acento de tu sistema (por ejemplo el azul o el verde
+de Zorin, el acento de GNOME o el de KDE y macOS) y las esquinas redondeadas de
+cada escritorio. Si cambias el tema, el panel lo sigue la próxima vez que lo
+abras.
 
 ## Atajos en cada escritorio
 

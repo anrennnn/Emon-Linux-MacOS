@@ -2,8 +2,9 @@
 
 from . import config, inserter
 from .catalog import EMOJI_FONTS, Catalog, Item, Section, search
+from .theme import Theme
 from .qt import (
-    QAbstractItemView, QAbstractListModel, QButtonGroup, QColor, QCursor, QFont, QFrame, QGuiApplication,
+    QAbstractItemView, QAbstractListModel, QButtonGroup, QCursor, QFont, QFrame, QGuiApplication,
     QHBoxLayout, QLabel, QLineEdit, QListView, QMenu, QModelIndex, QPainter, QPainterPath, QPoint, QRectF,
     QRegion, QSize, QStyle, QStyledItemDelegate, Qt, QTextLayout, QTimer, QToolButton, QVBoxLayout, QWidget,
     font_families, pyqtSignal,
@@ -59,40 +60,6 @@ def support_checker(font: QFont):
     return supported
 
 
-def _is_dark() -> bool:
-    return QGuiApplication.palette().window().color().lightness() < 128
-
-
-def _colors() -> dict:
-    if _is_dark():
-        return dict(bg="#202020", field="#2d2d2d", hover="#383838", text="#ffffff", sub="#c5c5c5",
-                    border="#3b3b3b", accent="#4cc2ff")
-    return dict(bg="#f3f3f3", field="#ffffff", hover="#e6e6e6", text="#1b1b1b", sub="#5f5f5f",
-                border="#dcdcdc", accent="#005fb8")
-
-
-def _stylesheet() -> str:
-    c = _colors()
-    return f"""
-        #panel {{ background: {c['bg']}; border: 1px solid {c['border']}; border-radius: 10px; }}
-        QLabel {{ color: {c['text']}; }}
-        #section {{ color: {c['sub']}; font-weight: 600; padding: 2px 4px; }}
-        #empty {{ color: {c['sub']}; }}
-        QLineEdit {{ background: {c['field']}; color: {c['text']}; border: 1px solid {c['border']};
-                     border-bottom: 2px solid {c['accent']}; border-radius: 5px; padding: 6px 8px; }}
-        QListView {{ background: transparent; border: none; outline: none; }}
-        QToolButton {{ color: {c['text']}; background: transparent; border: none; border-radius: 5px;
-                       padding: 3px 6px; }}
-        QToolButton:hover {{ background: {c['hover']}; }}
-        QToolButton:checked {{ background: {c['hover']}; border-bottom: 2px solid {c['accent']}; }}
-        #tab {{ font-size: 14px; padding: 5px 10px; }}
-        #categoria {{ padding: 0px; }}
-        QMenu {{ background: {c['field']}; color: {c['text']}; border: 1px solid {c['border']}; }}
-        QMenu::item {{ padding: 4px 14px; }}
-        QMenu::item:selected {{ background: {c['hover']}; }}
-    """
-
-
 class GridModel(QAbstractListModel):
     def __init__(self):
         super().__init__()
@@ -130,16 +97,17 @@ class CellDelegate(QStyledItemDelegate):
         painter.save()
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
         rect = QRectF(option.rect).adjusted(2, 2, -2, -2)
-        c = _colors()
+        theme = self.view.theme
+        radius = max(theme.radius - 4, 4)
         if option.state & QStyle.StateFlag.State_Selected:
-            painter.setPen(QColor(c["accent"]))
-            painter.setBrush(QColor(c["hover"]))
-            painter.drawRoundedRect(rect, 6, 6)
+            painter.setPen(theme.accent)
+            painter.setBrush(theme.selected)
+            painter.drawRoundedRect(rect, radius, radius)
         elif option.state & QStyle.StateFlag.State_MouseOver:
             painter.setPen(Qt.PenStyle.NoPen)
-            painter.setBrush(QColor(c["hover"]))
-            painter.drawRoundedRect(rect, 6, 6)
-        painter.setPen(QColor(c["text"]))
+            painter.setBrush(theme.hover)
+            painter.drawRoundedRect(rect, radius, radius)
+        painter.setPen(theme.text)
         painter.setFont(self.view.font())
         painter.drawText(option.rect, Qt.AlignmentFlag.AlignCenter, index.data())
         painter.restore()
@@ -165,6 +133,7 @@ class Grid(QListView):
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
         self.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
+        self.theme = Theme()
         self.setItemDelegate(CellDelegate(self))
         self.model_ = GridModel()
         self.setModel(self.model_)
@@ -297,8 +266,13 @@ class EmojiPanel(QWidget):
         self.tone_button.setFixedSize(32, 32)
         self.tone_button.clicked.connect(self._choose_tone)
 
-        self.setStyleSheet(_stylesheet())
+        self.apply_theme()
         self.show_tab("emojis")
+
+    def apply_theme(self):
+        self.grid.theme = Theme()
+        self.setStyleSheet(self.grid.theme.stylesheet())
+        self._update_mask()  # las esquinas con el radio nuevo
 
     # --- contenido ---------------------------------------------------------
 
@@ -481,7 +455,7 @@ class EmojiPanel(QWidget):
                 self.search.setFocus()
             return
         self.target = inserter.Target()  # antes de mostrarse, para saber a dónde volver
-        self.setStyleSheet(_stylesheet())
+        self.apply_theme()  # por si el usuario cambió el tema del escritorio
         self.show_tab(tab)
         if config.IS_MACOS:
             from . import macos
@@ -503,22 +477,24 @@ class EmojiPanel(QWidget):
         if not text:
             return
         self.settings.use(text)
-        if inserter.method() == "portapapeles":
+        if inserter.uses_clipboard(inserter.method()):
             inserter.copy_now(text)  # mientras el panel aún tiene el foco
         self.hide()
         # En macOS hay que esperar a que la otra app vuelva a estar delante.
         QTimer.singleShot(250 if config.IS_MACOS else 120, lambda: self._insert(text))
 
     def _insert(self, text: str):
-        message = inserter.insert(text, self.target)
-        if message:
-            self.notify(f"{text}  {message}")
+        inserter.insert(text, self.target, lambda message: self.notify(f"{text}  {message}"))
 
     def resizeEvent(self, event):
         super().resizeEvent(event)
+        self._update_mask()
+
+    def _update_mask(self):
         if self.use_mask:
             path = QPainterPath()
-            path.addRoundedRect(QRectF(self.rect()), 10, 10)
+            radius = self.grid.theme.radius
+            path.addRoundedRect(QRectF(self.rect()), radius, radius)
             self.setMask(QRegion(path.toFillPolygon().toPolygon()))
 
     def changeEvent(self, event):

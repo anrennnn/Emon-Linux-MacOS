@@ -7,7 +7,7 @@ from pathlib import Path
 
 APP_ID = "emojis-linux"
 APP_NAME = "Emojis"
-VERSION = "0.1.0"
+VERSION = "0.2.0"
 
 # Como en Windows, la sección «Usados recientemente» guarda unos pocos.
 RECENT_LIMIT = 40
@@ -59,11 +59,13 @@ class Settings:
         self.recent: list[str] = []
         self.tone = 0  # 0 = amarillo (sin tono), 1..5 = de claro a oscuro
         self.shortcuts: list[str] = []  # vacío = los predeterminados; texto de Qt, p. ej. «Meta+.»
+        self.keyboard_token = ""  # permiso del portal RemoteDesktop (Wayland) para no volver a pedirlo
         try:
             data = json.loads(SETTINGS_FILE.read_text(encoding="utf-8"))
             self.recent = [s for s in data.get("recientes", []) if isinstance(s, str)][:RECENT_LIMIT]
             self.tone = int(data.get("tono", 0)) if 0 <= int(data.get("tono", 0)) <= 5 else 0
             self.shortcuts = [s for s in data.get("atajos", []) if isinstance(s, str) and s]
+            self.keyboard_token = str(data.get("permiso_teclado", ""))
         except (OSError, ValueError, TypeError, AttributeError):
             pass
 
@@ -75,6 +77,10 @@ class Settings:
         self.tone = tone
         self.save()
 
+    def set_keyboard_token(self, token: str):
+        self.keyboard_token = token
+        self.save()
+
     def set_shortcuts(self, keys: list[str]):
         self.shortcuts = keys
         self.save()
@@ -83,7 +89,11 @@ class Settings:
         DATA_DIR.mkdir(parents=True, exist_ok=True)
         tmp = SETTINGS_FILE.with_suffix(".tmp")
         tmp.write_text(
-            json.dumps({"recientes": self.recent, "tono": self.tone, "atajos": self.shortcuts}, ensure_ascii=False),
+            json.dumps(
+                {"recientes": self.recent, "tono": self.tone, "atajos": self.shortcuts,
+                 "permiso_teclado": self.keyboard_token},
+                ensure_ascii=False,
+            ),
             encoding="utf-8",
         )
         tmp.replace(SETTINGS_FILE)

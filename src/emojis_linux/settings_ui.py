@@ -103,6 +103,9 @@ class ShortcutDialog(QDialog):
         layout.addLayout(buttons)
 
     def open_dialog(self):
+        from .theme import Theme
+
+        self.setPalette(Theme().palette())  # claro u oscuro como el escritorio
         keys = self.settings.shortcuts or list(DEFAULT_KEYS)
         self.current.setText("Ahora: " + " o ".join(label(k) for k in keys))
         self.edit.clear()

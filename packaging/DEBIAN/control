@@ -3,7 +3,7 @@ Version: @VERSION@
 Section: utils
 Priority: optional
 Architecture: all
-Depends: python3 (>= 3.10), python3-pyqt6 | python3-pyqt5, fonts-noto-color-emoji, libnotify-bin
+Depends: python3 (>= 3.10), python3-pyqt6 | python3-pyqt5, python3-gi, fonts-noto-color-emoji, libnotify-bin
 Recommends: xdotool, wtype
 Suggests: ydotool
 Installed-Size: @SIZE@

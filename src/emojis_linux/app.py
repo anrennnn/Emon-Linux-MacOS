@@ -42,6 +42,9 @@ class Daemon:
         from .settings_ui import ShortcutDialog
 
         self.settings = config.Settings()
+        from . import inserter
+
+        inserter.configure(self.settings)
         self.panel = EmojiPanel(catalog, self.settings, lambda text: notify(config.APP_NAME, text))
         self.panel.open_settings = self.open_settings
         self.dialog = ShortcutDialog(self.settings, self.apply_keys, lambda text: notify(config.APP_NAME, text))

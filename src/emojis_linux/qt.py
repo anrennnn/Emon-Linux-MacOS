@@ -17,7 +17,7 @@ except ImportError:
 _EXPORTS = {
     QtCore: "QAbstractListModel QModelIndex QPoint QRectF QSize Qt QTimer pyqtSignal",
     QtGui: "QColor QCursor QFont QFontDatabase QGuiApplication QKeySequence QPainter QPainterPath "
-           "QRegion QTextLayout",
+           "QPalette QRegion QTextLayout",
     QtNetwork: "QLocalServer QLocalSocket",
     QtWidgets: "QAbstractItemView QApplication QButtonGroup QDialog QFrame QHBoxLayout QKeySequenceEdit "
                "QLabel QLineEdit QListView QMenu QPushButton QStyle QStyledItemDelegate QToolButton "
