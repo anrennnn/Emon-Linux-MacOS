@@ -6,7 +6,7 @@
 pkgname=emon
 pkgver=0.3.0
 pkgrel=1
-_commit=1fbd7a18a968b238477ca8d3230c2c5bb5fc1138
+_commit=816e6efa9a93504a11f89d1375825bd0b2dc54ec
 pkgdesc="Panel de emojis y símbolos al estilo de Windows (Super+.)"
 arch=('any')
 url="https://github.com/anrennnn/EMON-Linux-MacOS"
@@ -31,7 +31,7 @@ conflicts=('emojis-linux')
 replaces=('emojis-linux')  # hasta la 0.2 se llamaba así
 install=emon.install
 source=("$pkgname-$pkgver.tar.gz::$url/archive/$_commit.tar.gz")
-sha256sums=('6f6afa0b594177de88f1daaca8b283a5529037e5adcc2016a0f1fd9ceda4e6df')
+sha256sums=('3559d30520471fa18b20f91e8a3e7ff95e0622bcdf226220804e0209047acb48')
 
 package() {
     cd "EMON-Linux-MacOS-$_commit"
