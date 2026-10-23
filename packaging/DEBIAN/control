@@ -11,7 +11,7 @@ Provides: emojis-linux
 Suggests: ydotool
 Installed-Size: @SIZE@
 Maintainer: Emon <emon@users.noreply.github.com>
-Homepage: https://github.com/anrennnn/EMON-Linux-MacOS
+Homepage: https://github.com/anrennnn/Emon-Linux-MacOS
 Description: Panel de emojis y símbolos al estilo de Windows (Super+.)
  Super+. (o Super+;) abre un panel con todos los emojis de Unicode, por
  categorías, con búsqueda en el idioma del sistema y en inglés, usados

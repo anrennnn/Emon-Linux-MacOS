@@ -2,7 +2,7 @@ pkgbase = emon
 	pkgdesc = Panel de emojis y símbolos al estilo de Windows (Super+.)
 	pkgver = 0.3.0
 	pkgrel = 1
-	url = https://github.com/anrennnn/EMON-Linux-MacOS
+	url = https://github.com/anrennnn/Emon-Linux-MacOS
 	install = emon.install
 	arch = any
 	license = MIT
@@ -21,7 +21,7 @@ pkgbase = emon
 	optdepends = qt6-wayland: ventana nativa en sesiones Wayland
 	conflicts = emojis-linux
 	replaces = emojis-linux
-	source = emon-0.3.0.tar.gz::https://github.com/anrennnn/EMON-Linux-MacOS/archive/816e6efa9a93504a11f89d1375825bd0b2dc54ec.tar.gz
+	source = emon-0.3.0.tar.gz::https://github.com/anrennnn/Emon-Linux-MacOS/archive/816e6efa9a93504a11f89d1375825bd0b2dc54ec.tar.gz
 	sha256sums = 3559d30520471fa18b20f91e8a3e7ff95e0622bcdf226220804e0209047acb48
 
 pkgname = emon

@@ -37,7 +37,7 @@ los casos el último paso es el mismo: **abrir Emon una vez**.
 1. Instala (copia las dos líneas en la terminal):
 
    ```sh
-   wget -O /tmp/emon.deb https://github.com/anrennnn/EMON-Linux-MacOS/raw/main/instalador/emon_0.3.0_all.deb
+   wget -O /tmp/emon.deb https://github.com/anrennnn/Emon-Linux-MacOS/raw/main/instalador/emon_0.3.0_all.deb
    sudo apt install /tmp/emon.deb
    ```
 
@@ -62,7 +62,7 @@ Funciona desde Ubuntu 22.04 (Linux Mint 21, Zorin OS 17, Pop!\_OS 22.04).
 1. Instala:
 
    ```sh
-   sudo dnf install https://github.com/anrennnn/EMON-Linux-MacOS/raw/main/instalador/emon-0.3.0-1.noarch.rpm
+   sudo dnf install https://github.com/anrennnn/Emon-Linux-MacOS/raw/main/instalador/emon-0.3.0-1.noarch.rpm
    ```
 
 2. Ábrelo una vez desde el menú de aplicaciones (**Emon**).
@@ -75,11 +75,11 @@ Funciona desde Ubuntu 22.04 (Linux Mint 21, Zorin OS 17, Pop!\_OS 22.04).
 1. Instala:
 
    ```sh
-   curl -LO https://github.com/anrennnn/EMON-Linux-MacOS/raw/main/instalador/emon-0.3.0-1-any.pkg.tar.zst
+   curl -LO https://github.com/anrennnn/Emon-Linux-MacOS/raw/main/instalador/emon-0.3.0-1-any.pkg.tar.zst
    sudo pacman -U emon-0.3.0-1-any.pkg.tar.zst
    ```
 
-   o desde el código: `git clone https://github.com/anrennnn/EMON-Linux-MacOS && cd EMON-Linux-MacOS/packaging/arch && makepkg -si`.
+   o desde el código: `git clone https://github.com/anrennnn/Emon-Linux-MacOS && cd Emon-Linux-MacOS/packaging/arch && makepkg -si`.
 
 2. Ábrelo una vez desde el menú de aplicaciones (**Emon**).
 3. Pulsa **Super + .** en cualquier sitio donde escribas. En KDE Plasma (lo que
@@ -91,7 +91,7 @@ Funciona desde Ubuntu 22.04 (Linux Mint 21, Zorin OS 17, Pop!\_OS 22.04).
 ### macOS
 
 1. Descarga el `.dmg` de tu Mac desde la versión
-   [«Emon para macOS»](https://github.com/anrennnn/EMON-Linux-MacOS/releases/tag/macos):
+   [«Emon para macOS»](https://github.com/anrennnn/Emon-Linux-MacOS/releases/tag/macos):
    `arm64` para Apple Silicon (M1, M2, M3, M4…) y `x86_64` para Mac con Intel.
 2. Ábrelo y arrastra **Emon** a **Aplicaciones**.
 3. Abre Emon. La primera vez, macOS dirá que no puede verificar la app (no

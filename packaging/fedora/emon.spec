@@ -3,7 +3,7 @@ Version:        @VERSION@
 Release:        1%{?dist}
 Summary:        Panel de emojis y símbolos al estilo de Windows (Super+.)
 License:        MIT AND Unicode-3.0
-URL:            https://github.com/anrennnn/EMON-Linux-MacOS
+URL:            https://github.com/anrennnn/Emon-Linux-MacOS
 Source0:        %{name}-%{version}.tar.gz
 BuildArch:      noarch
 

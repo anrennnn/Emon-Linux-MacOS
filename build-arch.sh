@@ -8,7 +8,7 @@ COMMIT=local
 WORK=$(pwd)/build/arch
 rm -rf "$WORK"
 mkdir -p "$WORK" dist
-tar --transform "s,^,EMON-Linux-MacOS-$COMMIT/," -czf "$WORK/emon-$VERSION.tar.gz" \
+tar --transform "s,^,Emon-Linux-MacOS-$COMMIT/," -czf "$WORK/emon-$VERSION.tar.gz" \
     Makefile LICENSE LICENSE-UNICODE README.md src data
 sed -e "s/^_commit=.*/_commit=$COMMIT/" -e "s/^sha256sums=.*/sha256sums=(SKIP)/" -e "s/^pkgver=.*/pkgver=$VERSION/" \
     packaging/arch/PKGBUILD > "$WORK/PKGBUILD"
