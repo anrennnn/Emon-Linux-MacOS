@@ -25,7 +25,11 @@ class SingleKeyEdit(QKeySequenceEdit):
         self.after_finish = after_finish
         if hasattr(self, "setMaximumSequenceLength"):  # Qt 6.5 o más reciente
             self.setMaximumSequenceLength(1)
-        # El texto de ejemplo viene en inglés si Qt no tiene traducciones instaladas.
+
+    def clear(self):
+        super().clear()
+        # Qt vuelve a poner su texto de ejemplo («Press shortcut») al vaciarse, en inglés
+        # si no tiene traducciones instaladas.
         field = self.findChild(QLineEdit)
         if field is not None:
             field.setPlaceholderText("Pulsa la combinación…")
