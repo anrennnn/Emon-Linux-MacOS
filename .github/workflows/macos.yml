@@ -62,3 +62,7 @@ jobs:
             gh release create macos --prerelease --title "Emojis para macOS" \
               --notes "Se actualiza sola con cada cambio en main. Descarga el .dmg de tu Mac: arm64 = Apple Silicon (M1, M2, M3, M4…), x86_64 = Intel."
           gh release upload macos dist/*.dmg captura-*.png --clobber
+          # Solo se deja el .dmg de la versión actual, para no confundir al descargar.
+          VERSION=$(sed -n 's/^VERSION = "\(.*\)"/\1/p' src/emojis_linux/config.py)
+          gh release view macos --json assets -q '.assets[].name' | grep '\.dmg$' | grep -v -- "-$VERSION-" \
+            | xargs -r -n1 gh release delete-asset macos -y
