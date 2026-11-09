@@ -1,0 +1,79 @@
+# Construye los paquetes de Linux (.deb y .rpm) en cada cambio de main y los
+# publica en la versión «linux», lista para descargar e instalar.
+name: Linux
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "src/**"
+      - "data/**"
+      - "packaging/**"
+      - "Makefile"
+      - "build-deb.sh"
+      - "build-rpm.sh"
+      - ".github/workflows/linux.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  deb:
+    name: Paquete .deb (Debian, Ubuntu, Mint, Zorin, Pop!_OS)
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Construir el .deb
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y make
+          ./build-deb.sh
+
+      - name: Comprobar que se instala y arranca
+        run: |
+          sudo apt-get install -y ./dist/emon_*_all.deb
+          emon version
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: emon-deb
+          path: dist/*.deb
+
+      - name: Publicar en la versión «linux»
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release view linux > /dev/null 2>&1 || \
+            gh release create linux --prerelease --title "Emon para Linux" \
+              --notes "Se actualiza sola con cada cambio en main. Descarga el paquete de tu distribución: .deb para Debian, Ubuntu, Linux Mint, Pop!_OS y Zorin OS; .rpm para Fedora y Nobara."
+          gh release edit linux --title "Emon para Linux"
+          gh release upload linux dist/*.deb --clobber
+
+  rpm:
+    name: Paquete .rpm (Fedora, Nobara)
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Construir el .rpm
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y make rpm
+          ./build-rpm.sh
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: emon-rpm
+          path: dist/*.rpm
+
+      - name: Publicar en la versión «linux»
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release view linux > /dev/null 2>&1 || \
+            gh release create linux --prerelease --title "Emon para Linux" \
+              --notes "Se actualiza sola con cada cambio en main. Descarga el paquete de tu distribución: .deb para Debian, Ubuntu, Linux Mint, Pop!_OS y Zorin OS; .rpm para Fedora y Nobara."
+          gh release edit linux --title "Emon para Linux"
+          gh release upload linux dist/*.rpm --clobber
