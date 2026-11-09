@@ -81,6 +81,7 @@ class Settings:
         # Acción → atajos, texto de Qt (p. ej. «Meta+.»). Si falta una acción, sus
         # atajos son los predeterminados; una lista vacía significa «sin atajo».
         self.bindings: dict[str, list[str]] = {}
+        self.legacy_shortcuts = False  # venían de la lista única de la 0.3 o anterior
         self.keyboard_token = ""  # permiso del portal RemoteDesktop (Wayland) para no volver a pedirlo
         try:
             data = json.loads(SETTINGS_FILE.read_text(encoding="utf-8"))
@@ -98,6 +99,7 @@ class Settings:
                 legacy = [s for s in data.get("atajos", []) if isinstance(s, str) and s]
                 if legacy:
                     self.bindings = {"abrir": legacy}
+                    self.legacy_shortcuts = True
             self.keyboard_token = str(data.get("permiso_teclado", ""))
         except (OSError, ValueError, TypeError, AttributeError):
             pass
