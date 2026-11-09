@@ -65,11 +65,13 @@ _HANDLER = ctypes.CFUNCTYPE(ctypes.c_int32, ctypes.c_void_p, ctypes.c_void_p, ct
 
 
 class HotKeys:
-    """Atajos globales. on_press se llama en el hilo principal (bucle de eventos de Qt)."""
+    """Atajos globales. on_press recibe el id de la acción y se llama en el hilo
+    principal (bucle de eventos de Qt)."""
 
-    def __init__(self, on_press, keys: list[str]):
+    def __init__(self, on_press, bindings: dict[str, list[str]]):
         self.on_press = on_press
         self.refs = []
+        self.actions = {}  # id de RegisterEventHotKey → id de la acción
         carbon = ctypes.cdll.LoadLibrary("/System/Library/Frameworks/Carbon.framework/Carbon")
         carbon.GetApplicationEventTarget.restype = ctypes.c_void_p
         carbon.InstallEventHandler.argtypes = [
@@ -91,33 +93,44 @@ class HotKeys:
         spec = _EventTypeSpec(_fourcc("keyb"), 5)  # kEventClassKeyboard, kEventHotKeyPressed
         self.target = carbon.GetApplicationEventTarget()
         carbon.InstallEventHandler(self.target, self.handler, 1, ctypes.byref(spec), None, None)
-        self.set_keys(keys)
+        self.set_keys(bindings)
 
-    def set_keys(self, keys: list[str]) -> list[str]:
-        """Cambia los atajos. Devuelve los que no se pudieron registrar."""
+    def set_keys(self, bindings: dict[str, list[str]]) -> list[str]:
+        """Cambia los atajos. Devuelve las combinaciones que no se pudieron registrar."""
         for ref in self.refs:
             self.carbon.UnregisterEventHotKey(ref)
         self.refs = []
+        self.actions = {}
         failed = []
-        for n, key in enumerate(keys, start=1):
-            parsed = carbon_key(key)
-            ref = ctypes.c_void_p()
-            status = -1
-            if parsed is not None:
-                code, mods = parsed
-                status = self.carbon.RegisterEventHotKey(
-                    code, mods, _EventHotKeyID(_fourcc("EMOJ"), n), self.target, 0, ctypes.byref(ref)
-                )
-            if status == 0:
-                self.refs.append(ref)
-            else:
-                print(f"No se pudo registrar el atajo {key} (código {status}): ¿lo usa otra app?", file=sys.stderr)
-                failed.append(key)
+        n = 0
+        for action, keys in bindings.items():
+            for key in keys:
+                n += 1
+                parsed = carbon_key(key)
+                ref = ctypes.c_void_p()
+                status = -1
+                if parsed is not None:
+                    code, mods = parsed
+                    status = self.carbon.RegisterEventHotKey(
+                        code, mods, _EventHotKeyID(_fourcc("EMOJ"), n), self.target, 0, ctypes.byref(ref)
+                    )
+                if status == 0:
+                    self.refs.append(ref)
+                    self.actions[n] = action
+                else:
+                    print(f"No se pudo registrar el atajo {key} (código {status}): ¿lo usa otra app?", file=sys.stderr)
+                    failed.append(key)
         return failed
 
-    def _handle(self, _call_ref, _event, _data):
+    def _handle(self, _call_ref, event, _data):
         try:
-            self.on_press()
+            hotkey = _EventHotKeyID()
+            self.carbon.GetEventParameter(
+                event, _fourcc("----"), _fourcc("hkid"), None,  # kEventParamDirectObject, typeEventHotKeyID
+                ctypes.sizeof(hotkey), None, ctypes.byref(hotkey),
+            )
+            action = self.actions.get(hotkey.id, "abrir")
+            self.on_press(action)
         except Exception as exc:  # una excepción aquí cerraría la app
             print("Error en el atajo:", exc, file=sys.stderr)
         return 0
@@ -239,9 +252,14 @@ def setup_login_item() -> list[str]:
     """La primera vez: arrancar Emon al iniciar sesión y explicar el atajo."""
     if config.SHORTCUTS_MARKER.exists():
         return []
-    from .shortcuts import current_keys, label
+    from . import actions
+    from .shortcuts import label
 
-    notes = [f"Pulsa {label(current_keys()[0])} en cualquier app para abrir los emojis."]
+    keys = actions.current(config.Settings())["abrir"]
+    notes = [
+        f"Pulsa {' o '.join(label(k) for k in keys)} en cualquier app para abrir los emojis."
+        if keys else f"Abre {config.APP_NAME} desde el menú de aplicaciones."
+    ]
     if getattr(sys, "frozen", False):
         # Dentro de Emon.app (PyInstaller): sys.executable es el ejecutable de la app.
         LAUNCH_AGENT.parent.mkdir(parents=True, exist_ok=True)

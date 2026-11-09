@@ -12,7 +12,7 @@ import shutil
 import subprocess
 import sys
 
-from . import config
+from . import actions, config
 from .qt import QApplication, QLocalServer, QLocalSocket, QTimer, prepare_application
 
 SOCKET_NAME = f"{config.APP_ID}-{os.getuid()}"
@@ -53,9 +53,7 @@ class Daemon:
             from . import macos
 
             macos.become_accessory()
-            from .shortcuts import current_keys
-
-            self.hotkeys = macos.HotKeys(lambda: self.handle("abrir"), current_keys())
+            self.hotkeys = macos.HotKeys(self.handle, actions.current(self.settings))
 
         QLocalServer.removeServer(SOCKET_NAME)
         self.server = QLocalServer()
@@ -90,16 +88,20 @@ class Daemon:
             macos.activate_self()
         self.dialog.open_dialog()
 
-    def apply_keys(self, keys: list[str], old: list[str]) -> list[str]:
-        """Pone el atajo nuevo en el escritorio (Linux) o lo registra (macOS)."""
+    def apply_keys(self, bindings: dict[str, list[str]], old: dict[str, list[str]]) -> list[str]:
+        """Pone los atajos nuevos en el escritorio (Linux) o los registra (macOS)."""
         from .shortcuts import apply, label
 
         if self.hotkeys is None:
-            return apply(keys, old)
-        failed = self.hotkeys.set_keys(keys)
+            return apply(bindings, old)
+        failed = self.hotkeys.set_keys(bindings)
         if failed:
-            return [f"No se pudo usar {', '.join(label(k) for k in failed)}: puede que lo use otra app."]
-        return [f"Listo: {' o '.join(label(k) for k in keys)} abre el panel de emojis."]
+            return [f"No se pudo usar {' o '.join(label(k) for k in failed)}: puede que lo use otra app."]
+        lines = [
+            f"  {' o '.join(label(k) for k in keys)} → {actions.ACTIONS_BY_ID[action].name}"
+            for action, keys in bindings.items() if keys
+        ]
+        return ["Listo: atajos actualizados.", *lines]
 
 
 def notify(title: str, body: str):

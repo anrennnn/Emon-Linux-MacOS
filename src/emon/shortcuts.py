@@ -1,10 +1,11 @@
-"""Registra el atajo del panel (por defecto Super+. y Super+;) en el escritorio.
+"""Registra los atajos del panel en el escritorio.
 
 Cada escritorio guarda sus atajos en un sitio distinto, así que no hay una única
-forma de hacerlo. Se ejecuta al primer arranque, cuando el usuario elige otro
-atajo en la ventana de ajustes y con `emon atajos`.
+forma de hacerlo. Se ejecuta al primer arranque, cuando el usuario cambia los
+atajos en la ventana de ajustes y con `emon atajos`.
 
-Los atajos se guardan como texto de Qt («Meta+.», «Ctrl+Alt+E»); en Linux
+Cada acción (abrir el panel, abrir símbolos o abrir los ajustes) puede tener su
+propio atajo. Se guardan como texto de Qt («Meta+.», «Ctrl+Alt+E»); en Linux
 Meta es la tecla Super (la de Windows).
 """
 
@@ -12,13 +13,14 @@ import ast
 import shutil
 import subprocess
 
-from . import config
+from . import actions, config
 
-OPEN_CMD = "emon abrir"
-# Hasta la 0.2 la app se llamaba «Emojis» y el comando era este: sus atajos se quitan.
-OLD_CMD = "emojis-linux abrir"
+# Comandos que puede haber dejado Emon (los actuales y los de versiones anteriores).
+OUR_COMMANDS = {action.command for action in actions.ACTIONS} | {
+    "emojis-linux abrir", "emojis-linux simbolos", "emojis-linux ajustes",
+}
 # En macOS, Qt llama «Ctrl» a ⌘ y «Meta» a ⌃: el predeterminado es ⌃⌘. (⌘. es «cancelar»).
-DEFAULT_KEYS = ["Meta+Ctrl+.", "Meta+Ctrl+;"] if config.IS_MACOS else ["Meta+.", "Meta+;"]
+DEFAULT_KEYS = list(actions.ACTIONS_BY_ID["abrir"].defaults)
 
 # Nombres de tecla de X11/xkb, los que usan GNOME, Cinnamon, XFCE, Hyprland y Sway.
 _KEYSYMS = {
@@ -62,7 +64,8 @@ def label(key: str) -> str:
 
 
 def current_keys() -> list[str]:
-    return config.Settings().shortcuts or list(DEFAULT_KEYS)
+    """Atajos de «abrir el panel», que es la acción imprescindible."""
+    return actions.current(config.Settings())["abrir"]
 
 
 def _run(*cmd) -> str:
@@ -94,20 +97,23 @@ GNOME_KEYS = "org.gnome.settings-daemon.plugins.media-keys"
 GNOME_BASE = "/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/"
 
 
-def _setup_gnome(keys: list[str], _old: list[str]) -> list[str]:
+def _setup_gnome(bindings: dict[str, list[str]], _old: dict[str, list[str]]) -> list[str]:
     # GNOME solo admite una tecla por atajo personalizado: uno para cada combinación.
     # Primero se quitan todos los de Emon, por si antes había más.
     paths = [
         p for p in _gsettings_list(GNOME_KEYS, "custom-keybindings")
         if "/emon-" not in p and "/emojis-linux-" not in p
     ]
-    for n, key in enumerate(keys):
-        path = f"{GNOME_BASE}emon-{n}/"
-        paths.append(path)
-        schema = f"{GNOME_KEYS}.custom-keybinding:{path}"
-        _gsettings_set(schema, "name", "Panel de emojis")
-        _gsettings_set(schema, "command", OPEN_CMD)
-        _gsettings_set(schema, "binding", to_gtk(key))
+    n = 0
+    for action in actions.ACTIONS:
+        for key in bindings.get(action.id, []):
+            path = f"{GNOME_BASE}emon-{n}/"
+            paths.append(path)
+            schema = f"{GNOME_KEYS}.custom-keybinding:{path}"
+            _gsettings_set(schema, "name", action.name)
+            _gsettings_set(schema, "command", action.command)
+            _gsettings_set(schema, "binding", to_gtk(key))
+            n += 1
     _gsettings_set(GNOME_KEYS, "custom-keybindings", paths)
     return []
 
@@ -118,15 +124,21 @@ CINNAMON_KEYS = "org.cinnamon.desktop.keybindings"
 CINNAMON_BASE = "/org/cinnamon/desktop/keybindings/custom-keybindings/"
 
 
-def _setup_cinnamon(keys: list[str], _old: list[str]) -> list[str]:
-    names = [n for n in _gsettings_list(CINNAMON_KEYS, "custom-list") if n != "custom-emojis-linux"]
-    slug = "custom-emon"
-    if slug not in names:
+def _setup_cinnamon(bindings: dict[str, list[str]], _old: dict[str, list[str]]) -> list[str]:
+    names = [
+        n for n in _gsettings_list(CINNAMON_KEYS, "custom-list")
+        if not n.startswith("custom-emon") and n != "custom-emojis-linux"
+    ]
+    for action in actions.ACTIONS:
+        keys = bindings.get(action.id, [])
+        if not keys:
+            continue
+        slug = "custom-emon" if action.id == "abrir" else f"custom-emon-{action.id}"
         names.append(slug)
-    schema = f"{CINNAMON_KEYS}.custom-keybinding:{CINNAMON_BASE}{slug}/"
-    _gsettings_set(schema, "name", "Panel de emojis")
-    _gsettings_set(schema, "command", OPEN_CMD)
-    _gsettings_set(schema, "binding", [to_gtk(k) for k in keys])
+        schema = f"{CINNAMON_KEYS}.custom-keybinding:{CINNAMON_BASE}{slug}/"
+        _gsettings_set(schema, "name", action.name)
+        _gsettings_set(schema, "command", action.command)
+        _gsettings_set(schema, "binding", [to_gtk(k) for k in keys])
     _gsettings_set(CINNAMON_KEYS, "custom-list", names)
     return []
 
@@ -134,23 +146,20 @@ def _setup_cinnamon(keys: list[str], _old: list[str]) -> list[str]:
 # --- XFCE (Xubuntu, MX Linux, Mint XFCE) ------------------------------------------
 
 
-def _setup_xfce(keys: list[str], old: list[str]) -> list[str]:
-    # Atajos de la versión anterior («emojis-linux abrir»), sea cual sea la tecla.
+def _setup_xfce(bindings: dict[str, list[str]], _old: dict[str, list[str]]) -> list[str]:
+    # Quita cualquier atajo de Emon (los de ahora y los de la versión anterior),
+    # sea cual sea la tecla a la que estuviera asignado.
     listing = _run("xfconf-query", "-c", "xfce4-keyboard-shortcuts", "-l", "-v")
     for line in listing.splitlines():
         prop, _, value = line.partition(" ")
-        if value.strip() == OLD_CMD:
+        if value.strip() in OUR_COMMANDS:
             _run("xfconf-query", "-c", "xfce4-keyboard-shortcuts", "-p", prop, "-r")
-    for key in old:
-        prop = f"/commands/custom/{to_gtk(key)}"
-        # Solo se borra si sigue siendo nuestro (el usuario pudo reasignarlo).
-        if _run("xfconf-query", "-c", "xfce4-keyboard-shortcuts", "-p", prop) == OPEN_CMD:
-            _run("xfconf-query", "-c", "xfce4-keyboard-shortcuts", "-p", prop, "-r")
-    for key in keys:
-        _run(
-            "xfconf-query", "-c", "xfce4-keyboard-shortcuts",
-            "-p", f"/commands/custom/{to_gtk(key)}", "-n", "-t", "string", "-s", OPEN_CMD,
-        )
+    for action in actions.ACTIONS:
+        for key in bindings.get(action.id, []):
+            _run(
+                "xfconf-query", "-c", "xfce4-keyboard-shortcuts",
+                "-p", f"/commands/custom/{to_gtk(key)}", "-n", "-t", "string", "-s", action.command,
+            )
     return []
 
 
@@ -160,6 +169,8 @@ def _setup_xfce(keys: list[str], old: list[str]) -> list[str]:
 _META, _CTRL, _ALT, _SHIFT = 0x10000000, 0x04000000, 0x08000000, 0x02000000
 _KEY_SPACE, _KEY_PERIOD = 0x20, 0x2E
 EMOJIER = ("org.kde.plasma.emojier.desktop", "_launch")
+# Nombre de la acción dentro de emon.desktop (ver data/applications/emon.desktop).
+KDE_ACTIONS = {"abrir": "_launch", "simbolos": "simbolos", "ajustes": "ajustes"}
 
 
 def _kde_code(key: str) -> int:
@@ -189,16 +200,21 @@ def _kglobalaccel_set(component: str, action: str, keys: list[int]) -> bool:
         return False
 
 
-def _setup_kde(keys: list[str], old: list[str]) -> list[str]:
+def _setup_kde(bindings: dict[str, list[str]], old: dict[str, list[str]]) -> list[str]:
     notes = []
     # El atajo de la versión anterior («Emojis»); si nunca existió, el error da igual.
     _kglobalaccel_set("emojis-linux.desktop", "_launch", [])
-    changes = [("emon.desktop", "_launch", [_kde_code(k) for k in keys])]
-    if "Meta+." in keys:
+    changes = [
+        ("emon.desktop", KDE_ACTIONS[action.id], [_kde_code(k) for k in bindings.get(action.id, [])])
+        for action in actions.ACTIONS
+    ]
+    uses_period = any("Meta+." in keys for keys in bindings.values())
+    used_before = any("Meta+." in keys for keys in old.values())
+    if uses_period:
         # El selector de emojis de Plasma usa Meta+. ; se le deja Meta+Ctrl+Alt+Mayús+Espacio.
         changes.insert(0, (*EMOJIER, [_META | _CTRL | _ALT | _SHIFT | _KEY_SPACE]))
         notes.append("El selector de emojis de KDE pasa a Meta+Ctrl+Alt+Mayús+Espacio.")
-    elif "Meta+." in old:
+    elif used_before:
         # Emon deja libre Meta+.: se le devuelve al selector de KDE.
         changes.append((*EMOJIER, [_META | _KEY_PERIOD]))
     if all(_kglobalaccel_set(*change) for change in changes):
@@ -207,7 +223,7 @@ def _setup_kde(keys: list[str], old: list[str]) -> list[str]:
     # kglobalaccel no responde: se deja escrito para el próximo inicio de sesión.
     writer = shutil.which("kwriteconfig6") or shutil.which("kwriteconfig5")
     if not writer:
-        raise ShortcutError("No se pudo hablar con KDE; asigna el atajo en Preferencias del sistema → Atajos.")
+        raise ShortcutError("No se pudo hablar con KDE; asigna los atajos en Preferencias del sistema → Atajos.")
 
     def write(groups, key, value):
         cmd = [writer, "--file", "kglobalshortcutsrc"]
@@ -215,10 +231,11 @@ def _setup_kde(keys: list[str], old: list[str]) -> list[str]:
             cmd += ["--group", g]
         _run(*cmd, "--key", key, value)
 
-    if "Meta+." in keys:
+    if uses_period:
         write(["services", EMOJIER[0]], EMOJIER[1], "Meta+Ctrl+Alt+Shift+Space")
-    write(["services", "emon.desktop"], "_launch", "\t".join(keys))
-    return [*notes, "Cierra sesión y vuelve a entrar para activar el atajo en KDE Plasma."]
+    for action in actions.ACTIONS:
+        write(["services", "emon.desktop"], KDE_ACTIONS[action.id], "\t".join(bindings.get(action.id, [])))
+    return [*notes, "Cierra sesión y vuelve a entrar para activar los atajos en KDE Plasma."]
 
 
 class ShortcutError(RuntimeError):
@@ -233,45 +250,65 @@ SETUP = {
 }
 
 
-def _manual_lines(desktop: str, key: str) -> tuple[str, list[str]] | None:
+def _manual_lines(desktop: str, bindings: dict[str, list[str]]) -> tuple[str, list[str]] | None:
     """Gestores en mosaico (habituales en Arch y CachyOS): los atajos viven en el archivo
     de configuración del usuario, que no tocamos; se indica qué añadir."""
-    mods, name = split(key)
-    sym = keysym(name)
-    if desktop == "hyprland":
-        hypr = " ".join({"Meta": "SUPER", "Ctrl": "CTRL", "Alt": "ALT", "Shift": "SHIFT"}[m] for m in mods)
-        return "~/.config/hypr/hyprland.conf", [f"bind = {hypr}, {sym}, exec, {OPEN_CMD}"]
-    if desktop == "sway":
-        sway = "+".join({"Meta": "Mod4", "Ctrl": "Ctrl", "Alt": "Mod1", "Shift": "Shift"}[m] for m in mods)
-        return "~/.config/sway/config", [f"bindsym {sway}+{sym} exec {OPEN_CMD}"]
-    if desktop == "niri":
-        niri = "+".join({"Meta": "Mod", "Ctrl": "Ctrl", "Alt": "Alt", "Shift": "Shift"}[m] for m in mods)
-        return "~/.config/niri/config.kdl (dentro de binds { })", [f'{niri}+{sym} {{ spawn "emon" "abrir"; }}']
-    return None
+    lines = []
+    for action in actions.ACTIONS:
+        for key in bindings.get(action.id, []):
+            mods, name = split(key)
+            sym = keysym(name)
+            if desktop == "hyprland":
+                hypr = " ".join({"Meta": "SUPER", "Ctrl": "CTRL", "Alt": "ALT", "Shift": "SHIFT"}[m] for m in mods)
+                lines.append(f"bind = {hypr}, {sym}, exec, {action.command}")
+            elif desktop == "sway":
+                sway = "+".join({"Meta": "Mod4", "Ctrl": "Ctrl", "Alt": "Mod1", "Shift": "Shift"}[m] for m in mods)
+                lines.append(f"bindsym {sway}+{sym} exec {action.command}")
+            elif desktop == "niri":
+                niri = "+".join({"Meta": "Mod", "Ctrl": "Ctrl", "Alt": "Alt", "Shift": "Shift"}[m] for m in mods)
+                lines.append(f'{niri}+{sym} {{ spawn "emon" "{action.id}"; }}')
+    if not lines:
+        return None
+    path = {
+        "hyprland": "~/.config/hypr/hyprland.conf",
+        "sway": "~/.config/sway/config",
+        "niri": "~/.config/niri/config.kdl (dentro de binds { })",
+    }[desktop]
+    return path, lines
 
 
-def apply(keys: list[str], old: list[str] | None = None) -> list[str]:
+def _summary(bindings: dict[str, list[str]]) -> list[str]:
+    lines = []
+    for action in actions.ACTIONS:
+        keys = bindings.get(action.id, [])
+        if keys:
+            lines.append(f"  {' o '.join(label(k) for k in keys)} → {action.name}")
+    return lines or ["  (ninguna acción tiene atajo)"]
+
+
+def apply(bindings: dict[str, list[str]], old: dict[str, list[str]] | None = None) -> list[str]:
     """Pone estos atajos en el escritorio (y quita los anteriores). Devuelve mensajes."""
     desktop = config.desktop()
-    shown = " o ".join(label(k) for k in keys)
+    old = old or {}
+    summary = _summary(bindings)
     func = SETUP.get(desktop)
     if func is not None:
         try:
-            notes = [f"Atajo configurado para {desktop}: {shown} abre el panel de emojis.", *func(keys, old or [])]
+            notes = [f"Atajos configurados para {desktop}:", *summary, *func(bindings, old)]
         except ShortcutError as exc:
-            notes = [str(exc), f"  {shown} → {OPEN_CMD}"]
-    elif (manual := _manual_lines(desktop, keys[0])) is not None:
+            notes = [str(exc), *summary]
+    elif (manual := _manual_lines(desktop, bindings)) is not None:
         path, lines = manual
-        notes = [f"Añade esta línea a {path} (y quita la del atajo anterior):", *lines]
+        notes = [f"Añade estas líneas a {path} (y quita las anteriores):", *lines]
     else:
-        notes = [f"Escritorio «{desktop}» no reconocido. Asigna a mano:", f"  {shown} → {OPEN_CMD}"]
+        notes = [f"Escritorio «{desktop}» no reconocido. Asigna los atajos a mano:", *summary]
     config.CONFIG_DIR.mkdir(parents=True, exist_ok=True)
     config.SHORTCUTS_MARKER.write_text(desktop + "\n", encoding="utf-8")
     return notes
 
 
 def setup_shortcuts(force: bool = False) -> list[str]:
-    """Configura el atajo guardado (o el predeterminado) la primera vez, o siempre con force."""
+    """Configura los atajos guardados (o los predeterminados) la primera vez, o siempre con force."""
     if config.SHORTCUTS_MARKER.exists() and not force:
         return []
-    return apply(current_keys())
+    return apply(actions.current(config.Settings()))

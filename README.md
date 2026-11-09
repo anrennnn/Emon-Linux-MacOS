@@ -42,7 +42,7 @@ los casos el último paso es el mismo: **abrir Emon una vez**.
    ```
 
 2. Ábrelo una vez: pulsa la tecla Super (la de Windows), escribe **Emon** y
-   ábrelo. Esa primera vez configura el atajo y se queda en marcha; desde
+   ábrelo. Esa primera vez configura los atajos y se queda en marcha; desde
    entonces arranca solo al iniciar sesión.
 3. Pulsa **Super + .** en cualquier sitio donde escribas, busca el emoji y haz
    clic o pulsa Enter.
@@ -84,8 +84,8 @@ Funciona desde Ubuntu 22.04 (Linux Mint 21, Zorin OS 17, Pop!\_OS 22.04).
 2. Ábrelo una vez desde el menú de aplicaciones (**Emon**).
 3. Pulsa **Super + .** en cualquier sitio donde escribas. En KDE Plasma (lo que
    trae CachyOS) acepta el permiso para controlar el teclado la primera vez.
-4. En **Hyprland, Sway o niri**, al abrirlo te dirá qué línea añadir a tu
-   configuración para el atajo (ver más abajo), e instala `wtype`
+4. En **Hyprland, Sway o niri**, al abrirlo te dirá qué líneas añadir a tu
+   configuración para los atajos (ver más abajo), e instala `wtype`
    (`sudo pacman -S wtype`) para que el emoji se escriba solo.
 
 ### macOS
@@ -108,15 +108,15 @@ usa porque en macOS significa «cancelar» en todas las apps.
 
 Hasta la versión 0.2 la app se llamaba **Emojis** (paquete `emojis-linux`).
 Instala Emon con los mismos comandos de arriba: sustituye a la anterior,
-conserva tus emojis recientes, el tono de piel y tu atajo, y cambia los atajos
+conserva tus emojis recientes, el tono de piel y tus atajos, y cambia los atajos
 del escritorio al nombre nuevo. En Mac, borra `Emojis.app` de Aplicaciones
 después de instalar `Emon.app`, y vuelve a dar el permiso de Accesibilidad a Emon.
 
 ### Si algo no funciona
 
 - **Super + . no hace nada:** escribe `emon atajos` en la terminal; te
-  dirá qué ha configurado. También puedes elegir otro atajo con ⚙ (ver «Cambiar
-  el atajo»).
+  dirá qué ha configurado. También puedes elegir otros atajos con ⚙ (ver
+  «Cambiar los atajos»).
 - **El emoji se copia pero no se pega solo:** en GNOME o KDE con Wayland, es que
   no se aceptó el permiso de controlar el teclado. Cierra Emon
   (`emon salir`), vuelve a abrirlo y acéptalo al elegir el siguiente
@@ -128,29 +128,40 @@ después de instalar `Emon.app`, y vuelve a dar el permiso de Accesibilidad a Em
 
 | Tecla | Qué hace |
 | --- | --- |
-| Super + . o Super + ; (Mac: ⌃⌘. o ⌃⌘;) | Abre el panel (si ya está abierto, lo cierra) |
+| Super + . o Super + ; (Mac: ⌃⌘. o ⌃⌘;) | Abre el panel o cambia a la pestaña de símbolos (si ya está abierto, lo cierra) |
 | Escribir | Busca al instante |
 | Flechas | Moverse entre los emojis |
 | Enter o clic | Escribe el emoji y cierra el panel |
 | Clic derecho | Elegir el tono de piel para ese emoji |
 | Esc o clic fuera | Cierra el panel |
-| ⚙ (arriba a la derecha) | Cambiar el atajo de teclado |
+| ⚙ (arriba a la derecha) | Cambiar los atajos de teclado |
 
-### Cambiar el atajo
+### Cambiar los atajos
 
-Pulsa ⚙ en el panel, o busca «Cambiar el atajo de teclado» en el menú de
-aplicaciones (clic derecho sobre Emon), o escribe `emon ajustes`. Haz
-clic en el cuadro, pulsa la combinación que quieras (por ejemplo Ctrl + Alt + E)
-y pulsa **Guardar**. Emon la pone en tu escritorio y quita la anterior.
-**Restaurar predeterminado** vuelve a Super + . y Super + ; (⌃⌘. y ⌃⌘; en Mac).
+Pulsa ⚙ en el panel, o busca «Cambiar los atajos de teclado» en el menú de
+aplicaciones (clic derecho sobre Emon), o escribe `emon ajustes`. Verás una
+lista con cada acción y sus combinaciones:
+
+| Acción | Para qué sirve |
+| --- | --- |
+| Abrir el panel de emojis | Abre Emon en la pestaña de emojis |
+| Abrir la pestaña de símbolos | Abre Emon en la pestaña Ω |
+| Abrir los ajustes de atajos | Abre esta misma ventana |
+
+Pulsa una combinación para cambiarla, **Añadir** para darle otra a la misma
+acción (por ejemplo Super + . y Ctrl + Alt + E) y **✕** para quitarla. Emon no
+deja guardar dos acciones con la misma combinación ni una tecla sola que
+chocaría con lo que escribes. Al pulsar **Guardar**, pone los atajos en tu
+escritorio y quita los anteriores. **Restaurar predeterminado** vuelve a
+Super + . y Super + ; (⌃⌘. y ⌃⌘; en Mac).
 
 Desde la terminal:
 
 ```sh
 emon abrir       # abrir el panel
 emon simbolos    # abrir en la pestaña de símbolos
-emon ajustes     # elegir otro atajo de teclado
-emon atajos      # volver a poner el atajo elegido en el escritorio
+emon ajustes     # elegir los atajos de cada acción
+emon atajos      # volver a poner los atajos elegidos en el escritorio
 emon salir       # detener el proceso de fondo
 emon version
 ```
@@ -191,19 +202,23 @@ abras.
 
 ## Atajos en cada escritorio
 
-Al primer arranque, Emon configura Super + . y Super + ; él solo (o el atajo
-que elijas con ⚙):
+Al primer arranque, Emon configura Super + . para abrir los emojis y Super + ;
+para los símbolos (⌃⌘. y ⌃⌘; en Mac); luego puedes cambiarlos todos con ⚙:
 
-- **GNOME**: dos atajos personalizados en Configuración → Teclado.
+- **GNOME**: un atajo personalizado por cada combinación en Configuración → Teclado.
 - **KDE Plasma**: el selector de emojis de KDE ya usa Meta + .; se le cambia a
   Meta + Ctrl + Alt + Mayús + Espacio y Emon se queda con Meta + . y Meta + ;.
-- **Cinnamon y XFCE**: atajos personalizados.
-- **Hyprland, Sway y niri**: Emon te dice qué línea añadir a tu configuración:
+  Las acciones «Símbolos» y «Ajustes» también se pueden asignar desde el panel.
+- **Cinnamon y XFCE**: atajos personalizados, uno por acción.
+- **Hyprland, Sway y niri**: Emon te dice qué líneas añadir a tu configuración:
 
   ```
   bind = SUPER, period, exec, emon abrir          # Hyprland
+  bind = SUPER, semicolon, exec, emon simbolos
   bindsym Mod4+period exec emon abrir             # Sway
+  bindsym Mod4+semicolon exec emon simbolos
   Mod+Period { spawn "emon" "abrir"; }            # niri
+  Mod+Semicolon { spawn "emon" "simbolos"; }
   ```
 
 ## Emojis nuevos y fuentes

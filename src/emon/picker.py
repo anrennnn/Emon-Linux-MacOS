@@ -220,7 +220,7 @@ class EmojiPanel(QWidget):
         header.addStretch(1)
         gear = QToolButton(frame)
         gear.setText("⚙")
-        gear.setToolTip("Cambiar el atajo de teclado")
+        gear.setToolTip("Cambiar los atajos de teclado")
         gear.clicked.connect(lambda: self.open_settings())
         header.addWidget(gear)
         close = QToolButton(frame)
