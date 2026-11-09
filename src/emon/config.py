@@ -78,16 +78,34 @@ class Settings:
     def __init__(self):
         self.recent: list[str] = []
         self.tone = 0  # 0 = amarillo (sin tono), 1..5 = de claro a oscuro
-        self.shortcuts: list[str] = []  # vacío = los predeterminados; texto de Qt, p. ej. «Meta+.»
+        # Acción → atajos, texto de Qt (p. ej. «Meta+.»). Si falta una acción, sus
+        # atajos son los predeterminados; una lista vacía significa «sin atajo».
+        self.bindings: dict[str, list[str]] = {}
         self.keyboard_token = ""  # permiso del portal RemoteDesktop (Wayland) para no volver a pedirlo
         try:
             data = json.loads(SETTINGS_FILE.read_text(encoding="utf-8"))
             self.recent = [s for s in data.get("recientes", []) if isinstance(s, str)][:RECENT_LIMIT]
             self.tone = int(data.get("tono", 0)) if 0 <= int(data.get("tono", 0)) <= 5 else 0
-            self.shortcuts = [s for s in data.get("atajos", []) if isinstance(s, str) and s]
+            stored = data.get("atajos_acciones")
+            if isinstance(stored, dict):
+                self.bindings = {
+                    str(action): [s for s in keys if isinstance(s, str) and s]
+                    for action, keys in stored.items()
+                    if isinstance(keys, list)
+                }
+            else:
+                # Hasta la 0.3 solo había una lista de atajos, todos para abrir el panel.
+                legacy = [s for s in data.get("atajos", []) if isinstance(s, str) and s]
+                if legacy:
+                    self.bindings = {"abrir": legacy}
             self.keyboard_token = str(data.get("permiso_teclado", ""))
         except (OSError, ValueError, TypeError, AttributeError):
             pass
+
+    @property
+    def shortcuts(self) -> list[str]:
+        """Compatibilidad: atajos de «abrir» (vacío = los predeterminados)."""
+        return list(self.bindings.get("abrir", []))
 
     def use(self, text: str):
         self.recent = [text, *(s for s in self.recent if s != text)][:RECENT_LIMIT]
@@ -101,17 +119,28 @@ class Settings:
         self.keyboard_token = token
         self.save()
 
-    def set_shortcuts(self, keys: list[str]):
-        self.shortcuts = keys
+    def set_bindings(self, bindings: dict[str, list[str]]):
+        self.bindings = {action: list(keys) for action, keys in bindings.items()}
         self.save()
+
+    def set_shortcuts(self, keys: list[str]):
+        """Compatibilidad: cambia solo los atajos de «abrir»."""
+        self.set_bindings({**self.bindings, "abrir": list(keys)})
 
     def save(self):
         DATA_DIR.mkdir(parents=True, exist_ok=True)
         tmp = SETTINGS_FILE.with_suffix(".tmp")
         tmp.write_text(
             json.dumps(
-                {"recientes": self.recent, "tono": self.tone, "atajos": self.shortcuts,
-                 "permiso_teclado": self.keyboard_token},
+                {
+                    "recientes": self.recent,
+                    "tono": self.tone,
+                    # Se sigue escribiendo «atajos» para que una versión anterior
+                    # de Emon conserve al menos el atajo del panel.
+                    "atajos": self.bindings.get("abrir", []),
+                    "atajos_acciones": self.bindings,
+                    "permiso_teclado": self.keyboard_token,
+                },
                 ensure_ascii=False,
             ),
             encoding="utf-8",

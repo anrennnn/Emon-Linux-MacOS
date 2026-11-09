@@ -10,12 +10,14 @@ Categories=Utility;
 Keywords=emon;emoji;emojis;símbolos;symbols;caritas;kaomoji;unicode;
 StartupNotify=false
 Actions=simbolos;ajustes;
-X-KDE-Shortcuts=Meta+.,Meta+;
+X-KDE-Shortcuts=Meta+.
 
 [Desktop Action simbolos]
 Name=Símbolos
 Exec=emon simbolos
+X-KDE-GlobalAccel-CommandShortcut=true
 
 [Desktop Action ajustes]
-Name=Cambiar el atajo de teclado
+Name=Cambiar los atajos de teclado
 Exec=emon ajustes
+X-KDE-GlobalAccel-CommandShortcut=true
